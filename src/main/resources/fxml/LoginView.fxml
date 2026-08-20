@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.dafi.desktop.adapters.inbound.fx.LoginController"
+            prefWidth="420" prefHeight="320"
+            styleClass="login-card">
+
+    <center>
+        <VBox alignment="CENTER" spacing="16">
+            <padding>
+                <Insets top="10" right="50" bottom="10" left="50"/>
+            </padding>
+
+            <Label text="&#x1F511;" style="-fx-font-size: 48px;"/>
+
+            <Label text="DAFI Desktop" styleClass="login-title"/>
+
+            <Label text="Despacho de Asesoría Funeraria Integral" styleClass="login-subtitle"/>
+
+            <VBox spacing="12" VBox.vgrow="NEVER">
+                <padding>
+                    <Insets top="15" right="0" bottom="0" left="0"/>
+                </padding>
+
+                <TextField fx:id="usernameField"
+                           prefHeight="40"/>
+
+                <PasswordField fx:id="passwordField"
+                               prefHeight="40"/>
+            </VBox>
+
+            <Label fx:id="errorLabel" styleClass="error-label" visible="false"
+                   wrapText="true" maxWidth="320"/>
+
+            <Button fx:id="loginButton" onAction="#handleLogin"
+                    prefWidth="200" prefHeight="42"
+                    styleClass="action-button"/>
+        </VBox>
+    </center>
+</BorderPane>

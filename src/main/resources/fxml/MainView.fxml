@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.dafi.desktop.adapters.inbound.fx.MainController"
+            prefWidth="1280" prefHeight="750">
+
+    <left>
+        <VBox styleClass="sidebar" prefWidth="220">
+            <padding>
+                <Insets top="0" right="0" bottom="20" left="0"/>
+            </padding>
+
+            <VBox spacing="0">
+                <padding>
+                    <Insets top="25" right="0" bottom="25" left="24"/>
+                </padding>
+
+                <Label fx:id="appTitle" text="DAFI" styleClass="app-title"/>
+                <Label fx:id="appSubtitle" styleClass="app-subtitle"/>
+            </VBox>
+
+            <Separator styleClass="sidebar-separator"/>
+
+            <VBox spacing="2">
+                <padding>
+                    <Insets top="10" right="0" bottom="10" left="0"/>
+                </padding>
+
+                <HBox fx:id="clientsButton" onMouseClicked="#handleClientsClick"
+                      alignment="CENTER_LEFT" styleClass="nav-item"
+                      prefWidth="220" prefHeight="44">
+                    <padding>
+                        <Insets top="0" right="20" bottom="0" left="24"/>
+                    </padding>
+                    <Label text="&#x1F465;" styleClass="nav-icon"/>
+                    <Label fx:id="clientsLabel" styleClass="nav-label"/>
+                </HBox>
+            </VBox>
+
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <VBox spacing="0">
+                <padding>
+                    <Insets top="0" right="0" bottom="15" left="24"/>
+                </padding>
+                <Label fx:id="versionLabel" style="-fx-text-fill: #5a6a8a; -fx-font-size: 11px;"/>
+            </VBox>
+        </VBox>
+    </left>
+
+    <center>
+        <VBox fx:id="contentArea" styleClass="content-area">
+            <padding>
+                <Insets top="30" right="30" bottom="30" left="30"/>
+            </padding>
+        </VBox>
+    </center>
+</BorderPane>
