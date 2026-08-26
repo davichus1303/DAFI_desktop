@@ -9,19 +9,15 @@ Name "DAFI Desktop"
 OutFile "DAFI-Desktop-Installer.exe"
 InstallDir "$LOCALAPPDATA\DAFI-Desktop"
 InstallDirRegKey HKCU "Software\DAFI-Desktop" "InstallDir"
-RequestExecutionLevel admin
-Unicode True
+RequestExecutionLevel user
 
 VIProductVersion "1.0.0.0"
 VIAddVersionKey "ProductName" "DAFI Desktop"
 VIAddVersionKey "CompanyName" "DAFI"
 VIAddVersionKey "FileDescription" "DAFI Desktop Installer"
 VIAddVersionKey "FileVersion" "1.0.0"
-VIAddVersionKey "LegalCopyright" "DAFI 2024"
 
-Var JavaPath
-Var NeedsJava
-Var JAVA_HOME_VAL
+Var JavaFound
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "..\LICENSE"
@@ -34,112 +30,82 @@ Var JAVA_HOME_VAL
 
 !insertmacro MUI_LANGUAGE "Spanish"
 
-Function DetectJava
-    StrCpy $NeedsJava "1"
-    ReadEnvStr $JAVA_HOME_VAL "JAVA_HOME"
-
-    ${If} "$JAVA_HOME_VAL" != ""
-        IfFileExists "$JAVA_HOME_VAL\bin\java.exe" 0 CheckPath
-        StrCpy $JavaPath "$JAVA_HOME_VAL\bin\java.exe"
-        StrCpy $NeedsJava "0"
-    ${EndIf}
-
-    CheckPath:
-    ${If} $NeedsJava == "1"
-        IfFileExists "C:\Program Files\Eclipse Adoptium\jdk-*\bin\java.exe" 0 CheckOracle
-        FindFirst $0 $1 "C:\Program Files\Eclipse Adoptium\jdk-*\bin\java.exe"
-        FindClose $0
-        StrCpy $JavaPath "$1"
-        StrCpy $NeedsJava "0"
-    ${EndIf}
-
-    CheckOracle:
-    ${If} $NeedsJava == "1"
-        IfFileExists "C:\Program Files\Java\jdk-*\bin\java.exe" 0 CheckDone
-        FindFirst $0 $1 "C:\Program Files\Java\jdk-*\bin\java.exe"
-        FindClose $0
-        StrCpy $JavaPath "$1"
-        StrCpy $NeedsJava "0"
-    ${EndIf}
-
-    CheckMicrosoft:
-    ${If} $NeedsJava == "1"
-        IfFileExists "C:\Program Files\Microsoft\jdk-*\bin\java.exe" 0 CheckDone
-        FindFirst $0 $1 "C:\Program Files\Microsoft\jdk-*\bin\java.exe"
-        FindClose $0
-        StrCpy $JavaPath "$1"
-        StrCpy $NeedsJava "0"
-    ${EndIf}
-
-    CheckDone:
-FunctionEnd
-
-Function InstallJava
-    DetailPrint "Descargando Java 17 (Temurin)..."
-    CreateDirectory "$TEMP\java-install"
-
-    nsExec::ExecToStack 'cmd /c curl -L -o "$TEMP\java-install\jdk17.msi" "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.13%2B11/OpenJDK17U-jdk_x64_windows_hotspot_17.0.13_11.msi"'
-    Pop $0
-
-    ${If} $0 != "0"
-        MessageBox MB_OK "No se pudo descargar Java 17. Instale manualmente desde https://adoptium.net/"
-        Abort
-    ${EndIf}
-
-    DetailPrint "Instalando Java 17 (esto puede tardar unos minutos)..."
-    nsExec::ExecToStack 'cmd /c msiexec /i "$TEMP\java-install\jdk17.msi" ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome /quiet /norestart'
-    Pop $0
-
-    ${If} $0 == "3010"
-        DetailPrint "Java 17 instalado correctamente (puede requerir reinicio)"
-    ${ElseIf} $0 == "0"
-        DetailPrint "Java 17 instalado correctamente"
-    ${Else}
-        MessageBox MB_OK "Error al instalar Java. Codigo: $0"
-        Abort
-    ${EndIf}
-
-    RMDir /r "$TEMP\java-install"
+Function .onInit
+    StrCpy $JavaFound "0"
 FunctionEnd
 
 Section "DAFI Desktop" SecMain
     SectionIn RO
 
-    ; --- Check and install Java ---
+    ; --- Check Java via simple file check ---
     DetailPrint "Verificando Java 17+..."
-    Call DetectJava
+    IfFileExists "$PROGRAMFILES\Eclipse Adoptium\jdk-17*\bin\java.exe" 0 +3
+        DetailPrint "Java encontrado (Adoptium)"
+        StrCpy $JavaFound "1"
 
-    ${If} $NeedsJava == "1"
-        DetailPrint "Java 17+ no encontrado. Instalando..."
-        Call InstallJava
-    ${Else}
-        DetailPrint "Java encontrado: $JavaPath"
+    ${If} $JavaFound == "0"
+        IfFileExists "$PROGRAMFILES\Java\jdk-17*\bin\java.exe" 0 +3
+            DetailPrint "Java encontrado (Oracle)"
+            StrCpy $JavaFound "1"
     ${EndIf}
 
-    ; --- Install application ---
+    ${If} $JavaFound == "0"
+        IfFileExists "$PROGRAMFILES\Microsoft\jdk-17*\bin\java.exe" 0 +3
+            DetailPrint "Java encontrado (Microsoft)"
+            StrCpy $JavaFound "1"
+    ${EndIf}
+
+    ${If} $JavaFound == "0"
+        MessageBox MB_YESNO "Java 17+ no encontrado.$\r$\n$\r$\nDesea descargar e instalar Java 17 automaticamente?$\r$\n(Si elige No, la app puede no funcionar)" IDYES DownloadJava IDNO SkipJava
+    ${EndIf}
+    Goto InstallApp
+
+    DownloadJava:
+        DetailPrint "Descargando Java 17..."
+        CreateDirectory "$TEMP\dafi-java"
+        nsExec::ExecToStack 'cmd /c curl -L -o "$TEMP\dafi-java\jdk17.msi" "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.13%2B11/OpenJDK17U-jdk_x64_windows_hotspot_17.0.13_11.msi"'
+        Pop $0
+        ${If} $0 != "0"
+            MessageBox MB_OK "No se pudo descargar Java 17.$\r$\nInstale manualmente desde https://adoptium.net/"
+            Goto SkipJava
+        ${EndIf}
+        DetailPrint "Instalando Java 17..."
+        nsExec::ExecToStack 'cmd /c msiexec /i "$TEMP\dafi-java\jdk17.msi" ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome /quiet /norestart'
+        Pop $0
+        RMDir /r "$TEMP\dafi-java"
+        ${If} $0 == "0"
+            DetailPrint "Java 17 instalado correctamente"
+        ${ElseIf} $0 == "3010"
+            DetailPrint "Java 17 instalado (puede requerir reinicio)"
+        ${Else}
+            MessageBox MB_OK "Error al instalar Java. Continuando sin Java..."
+        ${EndIf}
+
+    SkipJava:
+    DetailPrint "Continuando con la instalacion..."
+
+    InstallApp:
+    ; --- Install application files ---
     SetOutPath "$INSTDIR"
     DetailPrint "Instalando DAFI Desktop..."
     File /r "..\target\jpackage\DAFI-Desktop\*.*"
 
-    ; --- Create clean launcher (no terminal, no dependency check) ---
-    FileOpen $0 "$INSTDIR\DAFI-Desktop-Launcher.bat" w
+    ; --- Create launcher ---
+    FileOpen $0 "$INSTDIR\Launch-DAFI.bat" w
     FileWrite $0 '@echo off$\r$\n'
     FileWrite $0 'cd /d "%~dp0"$\r$\n'
     FileWrite $0 'start "" "%~dp0DAFI-Desktop.bat"$\r$\n'
     FileClose $0
 
-    ; --- Desktop shortcut ---
-    CreateShortCut "$DESKTOP\DAFI Desktop.lnk" "$INSTDIR\DAFI-Desktop-Launcher.bat" "" "$INSTDIR\app\DAFI-Desktop.ico"
-
-    ; --- Start Menu ---
+    ; --- Shortcuts ---
+    CreateShortCut "$DESKTOP\DAFI Desktop.lnk" "$INSTDIR\Launch-DAFI.bat" "" "$INSTDIR\app\DAFI-Desktop.ico"
     CreateDirectory "$SMPROGRAMS\DAFI Desktop"
-    CreateShortCut "$SMPROGRAMS\DAFI Desktop\DAFI Desktop.lnk" "$INSTDIR\DAFI-Desktop-Launcher.bat" "" "$INSTDIR\app\DAFI-Desktop.ico"
+    CreateShortCut "$SMPROGRAMS\DAFI Desktop\DAFI Desktop.lnk" "$INSTDIR\Launch-DAFI.bat" "" "$INSTDIR\app\DAFI-Desktop.ico"
     CreateShortCut "$SMPROGRAMS\DAFI Desktop\Desinstalar.lnk" "$INSTDIR\uninstall.exe"
 
     ; --- Registry ---
     WriteRegStr HKCU "Software\DAFI-Desktop" "InstallDir" "$INSTDIR"
     WriteUninstaller "$INSTDIR\uninstall.exe"
-
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DAFI-Desktop" "DisplayName" "DAFI Desktop"
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DAFI-Desktop" "UninstallString" '"$INSTDIR\uninstall.exe"'
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DAFI-Desktop" "InstallLocation" "$INSTDIR"
@@ -147,10 +113,6 @@ Section "DAFI Desktop" SecMain
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DAFI-Desktop" "Publisher" "DAFI"
     WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DAFI-Desktop" "NoModify" 1
     WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DAFI-Desktop" "NoRepair" 1
-
-    ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
-    IntFmt $0 "0x%08X" $0
-    WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\DAFI-Desktop" "EstimatedSize" "$0"
 
     DetailPrint "DAFI Desktop instalado correctamente!"
 SectionEnd
