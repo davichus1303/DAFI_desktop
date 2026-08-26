@@ -213,7 +213,7 @@ jobs:
           --app-version ${{ steps.version.outputs.version }}
           --type app-image
           --dest target/jpackage
-          --icon dafi.ico
+          --icon packaging/dafi.ico
           --java-options "-Dfile.encoding=UTF-8"
           --java-options "--add-modules javafx.controls,javafx.fxml"
           --java-options "-Xmx512m"
@@ -230,7 +230,7 @@ jobs:
           --app-version ${{ steps.version.outputs.version }}
           --type exe
           --dest target/installer
-          --icon dafi.ico
+          --icon packaging/dafi.ico
           --java-options "-Dfile.encoding=UTF-8"
           --java-options "--add-modules javafx.controls,javafx.fxml"
           --java-options "-Xmx512m"
