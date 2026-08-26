@@ -239,7 +239,6 @@ jobs:
           --win-menu
           --win-menu-group "DAFI"
           --win-shortcut
-          --app-content "README.md,INSTRUCCIONES-WINDOWS.txt,packaging/check-deps.ps1,packaging/DAFI-Desktop.bat"
 
       - name: Create portable .exe with dependency check
         shell: bash
