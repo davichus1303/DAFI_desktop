@@ -128,38 +128,30 @@ jobs:
           cp packaging/dafi.ico "$DEB_DIR/usr/share/icons/hicolor/256x256/apps/dafi-desktop.png"
 
           # Create desktop entry
-          cat > "$DEB_DIR/usr/share/applications/dafi-desktop.desktop" << EOF
-          [Desktop Entry]
-          Name=DAFI Desktop
-          Comment=Despacho de Asesoria Funeraria Integral
-          Exec=/opt/dafi-desktop/bin/${{ env.APP_NAME }}
-          Icon=dafi-desktop
-          Terminal=false
-          Type=Application
-          Categories=Office;
-          EOF
+          echo "[Desktop Entry]" > "$DEB_DIR/usr/share/applications/dafi-desktop.desktop"
+          echo "Name=DAFI Desktop" >> "$DEB_DIR/usr/share/applications/dafi-desktop.desktop"
+          echo "Comment=Despacho de Asesoria Funeraria Integral" >> "$DEB_DIR/usr/share/applications/dafi-desktop.desktop"
+          echo "Exec=/opt/dafi-desktop/bin/${{ env.APP_NAME }}" >> "$DEB_DIR/usr/share/applications/dafi-desktop.desktop"
+          echo "Icon=dafi-desktop" >> "$DEB_DIR/usr/share/applications/dafi-desktop.desktop"
+          echo "Terminal=false" >> "$DEB_DIR/usr/share/applications/dafi-desktop.desktop"
+          echo "Type=Application" >> "$DEB_DIR/usr/share/applications/dafi-desktop.desktop"
+          echo "Categories=Office;" >> "$DEB_DIR/usr/share/applications/dafi-desktop.desktop"
 
           # Create control file
-          cat > "$DEB_DIR/DEBIAN/control" << EOF
-          Package: ${{ env.APP_NAME | lowercase }}
-          Version: ${{ steps.version.outputs.version }}
-          Section: office
-          Priority: optional
-          Architecture: amd64
-          Depends: libgtk-3-0 (>= 3.10), libgl1 (>= 1.4), libglib2.0-0 (>= 2.56), libasound2 (>= 1.1)
-          Maintainer: DAFI <admin@dafi.local>
-          Description: DAFI Desktop - Client Management System
-           Desktop application for managing funeral services clients.
-           Features include secure authentication, encrypted data storage,
-           bulk Excel import, and contract management.
-          EOF
+          echo "Package: dafi-desktop" > "$DEB_DIR/DEBIAN/control"
+          echo "Version: ${{ steps.version.outputs.version }}" >> "$DEB_DIR/DEBIAN/control"
+          echo "Section: office" >> "$DEB_DIR/DEBIAN/control"
+          echo "Priority: optional" >> "$DEB_DIR/DEBIAN/control"
+          echo "Architecture: amd64" >> "$DEB_DIR/DEBIAN/control"
+          echo "Depends: libgtk-3-0 (>= 3.10), libgl1 (>= 1.4), libglib2.0-0 (>= 2.56), libasound2 (>= 1.1)" >> "$DEB_DIR/DEBIAN/control"
+          echo "Maintainer: DAFI <admin@dafi.local>" >> "$DEB_DIR/DEBIAN/control"
+          echo "Description: DAFI Desktop - Client Management System" >> "$DEB_DIR/DEBIAN/control"
+          echo " Desktop application for managing funeral services clients." >> "$DEB_DIR/DEBIAN/control"
 
-          # Create postinst script (optional)
-          cat > "$DEB_DIR/DEBIAN/postinst" << 'EOF'
-          #!/bin/bash
-          echo "DAFI Desktop installed successfully."
-          echo "Run: /opt/dafi-desktop/bin/DAFI-Desktop"
-          EOF
+          # Create postinst script
+          echo "#!/bin/bash" > "$DEB_DIR/DEBIAN/postinst"
+          echo "echo \"DAFI Desktop installed successfully.\"" >> "$DEB_DIR/DEBIAN/postinst"
+          echo "echo \"Run: /opt/dafi-desktop/bin/DAFI-Desktop\"" >> "$DEB_DIR/DEBIAN/postinst"
           chmod 755 "$DEB_DIR/DEBIAN/postinst"
 
           # Build .deb
@@ -256,24 +248,22 @@ jobs:
           mkdir -p "$PORTABLE_DIR/scripts"
           cp packaging/check-deps.ps1 "$PORTABLE_DIR/scripts/"
           cp packaging/DAFI-Desktop.bat "$PORTABLE_DIR/"
-          
+
           # Create launcher that checks deps first
-          cat > "$PORTABLE_DIR/Launch-DAFI.bat" << 'EOF'
-          @echo off
-          echo Checking dependencies...
-          powershell -ExecutionPolicy Bypass -File "%~dp0scripts\check-deps.ps1" -Silent
-          if %ERRORLEVEL% neq 0 (
-              echo.
-              echo Some dependencies may not be installed.
-              echo The application may not start without Java 17+.
-              echo.
-              echo Press any key to continue anyway...
-              pause >nul
-          )
-          echo.
-          echo Starting DAFI Desktop...
-          call "%~dp0DAFI-Desktop.bat"
-          EOF
+          echo "@echo off" > "$PORTABLE_DIR/Launch-DAFI.bat"
+          echo "echo Checking dependencies..." >> "$PORTABLE_DIR/Launch-DAFI.bat"
+          echo "powershell -ExecutionPolicy Bypass -File \"%%~dp0scripts\\check-deps.ps1\" -Silent" >> "$PORTABLE_DIR/Launch-DAFI.bat"
+          echo "if %%ERRORLEVEL%% neq 0 (" >> "$PORTABLE_DIR/Launch-DAFI.bat"
+          echo "    echo." >> "$PORTABLE_DIR/Launch-DAFI.bat"
+          echo "    echo Some dependencies may not be installed." >> "$PORTABLE_DIR/Launch-DAFI.bat"
+          echo "    echo The application may not start without Java 17+." >> "$PORTABLE_DIR/Launch-DAFI.bat"
+          echo "    echo." >> "$PORTABLE_DIR/Launch-DAFI.bat"
+          echo "    echo Press any key to continue anyway..." >> "$PORTABLE_DIR/Launch-DAFI.bat"
+          echo "    pause >nul" >> "$PORTABLE_DIR/Launch-DAFI.bat"
+          echo ")" >> "$PORTABLE_DIR/Launch-DAFI.bat"
+          echo "echo." >> "$PORTABLE_DIR/Launch-DAFI.bat"
+          echo "echo Starting DAFI Desktop..." >> "$PORTABLE_DIR/Launch-DAFI.bat"
+          echo "call \"%%~dp0DAFI-Desktop.bat\"" >> "$PORTABLE_DIR/Launch-DAFI.bat"
           
           # Create zip for portable version
           cd target
