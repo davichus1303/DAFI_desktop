@@ -379,6 +379,7 @@ jobs:
           files: |
             artifacts/*.deb
             artifacts/*.exe
+            artifacts/*.zip
           draft: false
           prerelease: false
           generate_release_notes: true
