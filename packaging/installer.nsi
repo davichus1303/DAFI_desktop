@@ -125,7 +125,7 @@ Section "DAFI Desktop" SecMain
     FileOpen $0 "$INSTDIR\DAFI-Desktop-Launcher.bat" w
     FileWrite $0 '@echo off$\r$\n'
     FileWrite $0 'cd /d "%~dp0"$\r$\n'
-    FileWrite $0 'start "" "app\DAFI-Desktop.bat"$\r$\n'
+    FileWrite $0 'start "" "%~dp0DAFI-Desktop.bat"$\r$\n'
     FileClose $0
 
     ; --- Desktop shortcut ---
