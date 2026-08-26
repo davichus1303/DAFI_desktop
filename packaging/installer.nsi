@@ -123,15 +123,15 @@ Section "DAFI Desktop" SecMain
 
     ; Install application files
     DetailPrint "Instalando DAFI Desktop..."
-    File /r "target\jpackage\DAFI-Desktop\*.*"
+    File /r "..\target\jpackage\DAFI-Desktop\*.*"
 
     ; Install dependency scripts
     SetOutPath "$INSTDIR\scripts"
-    File "packaging\check-deps.ps1"
+    File "check-deps.ps1"
 
     ; Install launcher batch
     SetOutPath "$INSTDIR"
-    File "packaging\DAFI-Desktop.bat"
+    File "DAFI-Desktop.bat"
 
     ; Create launcher with dependency check
     FileOpen $0 "$INSTDIR\Launch-DAFI.bat" w
