@@ -227,11 +227,12 @@ jobs:
           echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Create NSIS installer
-        shell: bash
-        run: |
-          "/c/Program Files (x86)/NSIS/makensis.exe" /DAPP_VERSION=${{ steps.version.outputs.version }} packaging/installer.nsi
-          mv DAFI-Desktop-Installer.exe "target/DAFI-Desktop-${{ steps.version.outputs.version }}-windows.exe"
-          ls -lh target/*.exe
+        shell: cmd
+        run: >-
+          "C:\Program Files (x86)\NSIS\makensis.exe"
+          /DAPP_VERSION=${{ steps.version.outputs.version }}
+          packaging/installer.nsi &&
+          move DAFI-Desktop-Installer.exe "target\DAFI-Desktop-${{ steps.version.outputs.version }}-windows.exe"
 
       - name: Create portable package
         shell: pwsh
