@@ -220,25 +220,17 @@ jobs:
           --vendor "DAFI"
           --description "DAFI Desktop - Client Management System"
 
-      - name: Create .exe installer
-        shell: cmd
-        run: >-
-          jpackage --input target/lib
-          --main-jar dafi-desktop-1.0.0.jar
-          --main-class com.dafi.desktop.infrastructure.DafiLauncher
-          --name ${{ env.APP_NAME }}
-          --app-version ${{ steps.version.outputs.version }}
-          --type exe
-          --dest target/installer
-          --icon packaging/dafi.ico
-          --java-options "-Dfile.encoding=UTF-8"
-          --java-options "--add-modules javafx.controls,javafx.fxml"
-          --java-options "-Xmx512m"
-          --vendor "DAFI"
-          --description "DAFI Desktop - Client Management System"
-          --win-menu
-          --win-menu-group "DAFI"
-          --win-shortcut
+      - name: Install NSIS
+        shell: pwsh
+        run: |
+          choco install nsis -y --no-progress
+          echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Create NSIS installer
+        run: |
+          makensis /DAPP_VERSION=${{ steps.version.outputs.version }} packaging/installer.nsi
+          mv DAFI-Desktop-Installer.exe "target/DAFI-Desktop-${{ steps.version.outputs.version }}-windows.exe"
+          ls -lh target/*.exe
 
       - name: Create portable package
         shell: pwsh
@@ -270,14 +262,6 @@ jobs:
           
           Compress-Archive -Path "$portableDir/*" -DestinationPath "target/DAFI-Desktop-${{ steps.version.outputs.version }}-windows-portable.zip" -Force
           Get-ChildItem "target/*.zip"
-
-      - name: Rename .exe
-        shell: bash
-        run: |
-          EXE=$(find target/installer -name "*.exe" | head -1)
-          VERSION=${{ steps.version.outputs.version }}
-          mv "$EXE" "target/DAFI-Desktop-${VERSION}-windows.exe"
-          ls -lh target/*.exe
 
       - name: Upload .exe artifact
         uses: actions/upload-artifact@v4
