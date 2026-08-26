@@ -29,7 +29,7 @@ jobs:
       - name: Install display dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libgtk-3-0 libgl1 libglib2.0-0 libasound2 libx11-6 libxext6 libxrender1 libxtst6 libxi6
+          sudo apt-get install -y xvfb libgtk-3-0 libgl1 libglib2.0-0 libasound2t64 libx11-6 libxext6 libxrender1 libxtst6 libxi6
 
       - name: Compile
         run: mvn -B compile

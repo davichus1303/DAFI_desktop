@@ -76,7 +76,7 @@ jobs:
       - name: Install packaging dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libgtk-3-0 libgl1 libglib2.0-0 libasound2 dpkg-dev fakeroot
+          sudo apt-get install -y xvfb libgtk-3-0 libgl1 libglib2.0-0 libasound2t64 dpkg-dev fakeroot
 
       - name: Get version
         id: version
@@ -143,7 +143,7 @@ jobs:
           echo "Section: office" >> "$DEB_DIR/DEBIAN/control"
           echo "Priority: optional" >> "$DEB_DIR/DEBIAN/control"
           echo "Architecture: amd64" >> "$DEB_DIR/DEBIAN/control"
-          echo "Depends: libgtk-3-0 (>= 3.10), libgl1 (>= 1.4), libglib2.0-0 (>= 2.56), libasound2 (>= 1.1)" >> "$DEB_DIR/DEBIAN/control"
+          echo "Depends: libgtk-3-0 (>= 3.10), libgl1 (>= 1.4), libglib2.0-0 (>= 2.56), libasound2t64 (>= 1.1)" >> "$DEB_DIR/DEBIAN/control"
           echo "Maintainer: DAFI <admin@dafi.local>" >> "$DEB_DIR/DEBIAN/control"
           echo "Description: DAFI Desktop - Client Management System" >> "$DEB_DIR/DEBIAN/control"
           echo " Desktop application for managing funeral services clients." >> "$DEB_DIR/DEBIAN/control"
@@ -198,41 +198,41 @@ jobs:
         run: mvn -B clean package -DskipTests
 
       - name: Create app image with jpackage
-        run: |
-          jpackage ^
-            --input target/classes ^
-            --main-class com.dafi.desktop.infrastructure.DafiLauncher ^
-            --name ${{ env.APP_NAME }} ^
-            --app-version ${{ steps.version.outputs.version }} ^
-            --type app-image ^
-            --dest target/jpackage ^
-            --icon dafi.ico ^
-            --java-options "-Dfile.encoding=UTF-8" ^
-            --java-options "--add-modules javafx.controls,javafx.fxml" ^
-            --java-options "-Xmx512m" ^
-            --vendor "DAFI" ^
-            --description "DAFI Desktop - Client Management System"
+        shell: cmd
+        run: >-
+          jpackage --input target/classes
+          --main-class com.dafi.desktop.infrastructure.DafiLauncher
+          --name ${{ env.APP_NAME }}
+          --app-version ${{ steps.version.outputs.version }}
+          --type app-image
+          --dest target/jpackage
+          --icon dafi.ico
+          --java-options "-Dfile.encoding=UTF-8"
+          --java-options "--add-modules javafx.controls,javafx.fxml"
+          --java-options "-Xmx512m"
+          --vendor "DAFI"
+          --description "DAFI Desktop - Client Management System"
 
       - name: Create .exe installer
-        run: |
-          jpackage ^
-            --input target/classes ^
-            --main-class com.dafi.desktop.infrastructure.DafiLauncher ^
-            --name ${{ env.APP_NAME }} ^
-            --app-version ${{ steps.version.outputs.version }} ^
-            --type exe ^
-            --dest target/installer ^
-            --icon dafi.ico ^
-            --java-options "-Dfile.encoding=UTF-8" ^
-            --java-options "--add-modules javafx.controls,javafx.fxml" ^
-            --java-options "-Xmx512m" ^
-            --vendor "DAFI" ^
-            --description "DAFI Desktop - Client Management System" ^
-            --win-menu ^
-            --win-menu-group "DAFI" ^
-            --win-shortcut ^
-            --win-desktop ^
-            --app-content "README.md,INSTRUCCIONES-WINDOWS.txt,packaging/check-deps.ps1,packaging/DAFI-Desktop.bat"
+        shell: cmd
+        run: >-
+          jpackage --input target/classes
+          --main-class com.dafi.desktop.infrastructure.DafiLauncher
+          --name ${{ env.APP_NAME }}
+          --app-version ${{ steps.version.outputs.version }}
+          --type exe
+          --dest target/installer
+          --icon dafi.ico
+          --java-options "-Dfile.encoding=UTF-8"
+          --java-options "--add-modules javafx.controls,javafx.fxml"
+          --java-options "-Xmx512m"
+          --vendor "DAFI"
+          --description "DAFI Desktop - Client Management System"
+          --win-menu
+          --win-menu-group "DAFI"
+          --win-shortcut
+          --win-desktop
+          --app-content "README.md,INSTRUCCIONES-WINDOWS.txt,packaging/check-deps.ps1,packaging/DAFI-Desktop.bat"
 
       - name: Create portable .exe with dependency check
         shell: bash
