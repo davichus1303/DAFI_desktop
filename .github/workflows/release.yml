@@ -247,7 +247,11 @@ jobs:
           $launchBat = @"
           @echo off
           cd /d "%~dp0"
-          start "" "%~dp0DAFI-Desktop.bat"
+          if exist "%~dp0DAFI-Desktop.exe" (
+              start "" "%~dp0DAFI-Desktop.exe"
+          ) else (
+              start "" "%~dp0DAFI-Desktop.bat"
+          )
           "@
           Set-Content -Path "$portableDir/Launch-DAFI.bat" -Value $launchBat
           
