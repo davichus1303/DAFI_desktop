@@ -70,7 +70,7 @@ class BulkClientImportUseCaseTest {
 
         ArgumentCaptor<List<Client>> savedClients = ArgumentCaptor.forClass(List.class);
         verify(clientRepositoryPort).saveAll(savedClients.capture());
-        Client imported = savedClients.getValue().getFirst();
+        Client imported = savedClients.getValue().get(0);
         assertEquals("A-001", imported.getContractFolio());
         assertEquals("Juan Pérez", imported.getFullName());
         assertEquals("Plan Integral", imported.getContractType());
@@ -96,13 +96,13 @@ class BulkClientImportUseCaseTest {
         assertEquals(1, result.importedCount());
         assertEquals(1, result.rejectedCount());
 
-        List<String> errors = result.rejections().getFirst().errors();
+        List<String> errors = result.rejections().get(0).errors();
         assertTrue(errors.stream().anyMatch(error -> error.contains("Fecha Primer Pago")));
         assertTrue(errors.stream().anyMatch(error -> error.contains("Costo de Mensualidad")));
 
         ArgumentCaptor<List<Client>> savedClients = ArgumentCaptor.forClass(List.class);
         verify(clientRepositoryPort).saveAll(savedClients.capture());
-        assertEquals("María López", savedClients.getValue().getFirst().getFullName());
+        assertEquals("María López", savedClients.getValue().get(0).getFullName());
     }
 
     @Test
@@ -115,7 +115,7 @@ class BulkClientImportUseCaseTest {
         BulkImportResult result = useCase.importFromFile(file);
 
         assertEquals(1, result.rejectedCount());
-        List<String> errors = result.rejections().getFirst().errors();
+        List<String> errors = result.rejections().get(0).errors();
         assertTrue(errors.stream().anyMatch(error -> error.contains("'INE'")));
         assertTrue(errors.stream().anyMatch(error -> error.contains("'Segundo Beneficiario'")));
         assertEquals(1, result.importedCount());
@@ -133,7 +133,7 @@ class BulkClientImportUseCaseTest {
         assertEquals(0, result.rejectedCount());
         ArgumentCaptor<List<Client>> savedClients = ArgumentCaptor.forClass(List.class);
         verify(clientRepositoryPort).saveAll(savedClients.capture());
-        assertEquals(BigDecimal.ZERO, savedClients.getValue().getFirst().getAdvance());
+        assertEquals(BigDecimal.ZERO, savedClients.getValue().get(0).getAdvance());
     }
 
     @Test
@@ -149,9 +149,9 @@ class BulkClientImportUseCaseTest {
 
         assertEquals(1, result.importedCount());
         assertEquals(2, result.rejectedCount());
-        assertTrue(result.rejections().get(0).errors().getFirst()
+        assertTrue(result.rejections().get(0).errors().get(0)
                 .contains("ya está registrado en el sistema"));
-        assertTrue(result.rejections().get(1).errors().getFirst()
+        assertTrue(result.rejections().get(1).errors().get(0)
                 .contains("duplicado dentro del archivo"));
     }
 
@@ -169,7 +169,7 @@ class BulkClientImportUseCaseTest {
 
         assertEquals(1, result.importedCount());
         assertEquals(1, result.rejectedCount());
-        assertTrue(result.rejections().getFirst().errors().getFirst().contains("Gasolina"));
+        assertTrue(result.rejections().get(0).errors().get(0).contains("Gasolina"));
         assertTrue(result.unknownColumns().contains("Gasolina"));
     }
 
