@@ -83,7 +83,7 @@ Function InstallJava
     Pop $0
 
     ${If} $0 != "0"
-        MessageBox MB_OK|MB_ICONERROR "Error al descargar Java. Instale Java 17+ manualmente desde https://adoptium.net/"
+        MessageBox MB_OK "Error al descargar Java. Instale Java 17+ manualmente desde https://adoptium.net/"
         Abort
     ${EndIf}
 
@@ -96,7 +96,7 @@ Function InstallJava
     ${ElseIf} $0 == "0"
         DetailPrint "Java instalado correctamente"
     ${Else}
-        MessageBox MB_OK|MB_ICONERROR "Error al instalar Java. Codigo de error: $0"
+        MessageBox MB_OK "Error al instalar Java. Codigo de error: $0"
         Abort
     ${EndIf}
 
