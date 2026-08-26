@@ -90,11 +90,14 @@ jobs:
       - name: Compile and package JAR
         run: |
           mvn -B clean package -DskipTests
+          mvn -B dependency:copy-dependencies -DoutputDirectory=target/lib
+          cp target/dafi-desktop-1.0.0.jar target/lib/
 
       - name: Create app image with jpackage
         run: |
           jpackage \
-            --input target/classes \
+            --input target/lib \
+            --main-jar dafi-desktop-1.0.0.jar \
             --main-class com.dafi.desktop.infrastructure.DafiLauncher \
             --name ${{ env.APP_NAME }} \
             --app-version ${{ steps.version.outputs.version }} \
@@ -195,12 +198,16 @@ jobs:
           fi
 
       - name: Compile and package JAR
-        run: mvn -B clean package -DskipTests
+        run: |
+          mvn -B clean package -DskipTests
+          mvn -B dependency:copy-dependencies -DoutputDirectory=target/lib
+          cp target/dafi-desktop-1.0.0.jar target/lib/
 
       - name: Create app image with jpackage
         shell: cmd
         run: >-
-          jpackage --input target/classes
+          jpackage --input target/lib
+          --main-jar dafi-desktop-1.0.0.jar
           --main-class com.dafi.desktop.infrastructure.DafiLauncher
           --name ${{ env.APP_NAME }}
           --app-version ${{ steps.version.outputs.version }}
@@ -216,7 +223,8 @@ jobs:
       - name: Create .exe installer
         shell: cmd
         run: >-
-          jpackage --input target/classes
+          jpackage --input target/lib
+          --main-jar dafi-desktop-1.0.0.jar
           --main-class com.dafi.desktop.infrastructure.DafiLauncher
           --name ${{ env.APP_NAME }}
           --app-version ${{ steps.version.outputs.version }}
