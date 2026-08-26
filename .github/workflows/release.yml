@@ -246,19 +246,8 @@ jobs:
           
           $launchBat = @"
           @echo off
-          echo Checking dependencies...
-          powershell -ExecutionPolicy Bypass -File "%~dp0scripts\check-deps.ps1" -Silent
-          if %ERRORLEVEL% neq 0 (
-              echo.
-              echo Some dependencies may not be installed.
-              echo The application may not start without Java 17+.
-              echo.
-              echo Press any key to continue anyway...
-              pause >nul
-          )
-          echo.
-          echo Starting DAFI Desktop...
-          call "%~dp0DAFI-Desktop.bat"
+          cd /d "%~dp0"
+          start "" "%~dp0DAFI-Desktop.bat"
           "@
           Set-Content -Path "$portableDir/Launch-DAFI.bat" -Value $launchBat
           
