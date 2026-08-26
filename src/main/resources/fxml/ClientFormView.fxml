@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.dafi.desktop.adapters.inbound.fx.ClientFormController"
+      styleClass="form-container" visible="false" managed="false">
+    <padding>
+        <Insets top="0" right="10" bottom="10" left="10"/>
+    </padding>
+
+    <HBox alignment="CENTER_LEFT" spacing="10" VBox.vgrow="NEVER">
+        <padding>
+            <Insets top="10" right="10" bottom="10" left="10"/>
+        </padding>
+        <Label fx:id="formTitleLabel" styleClass="section-title"
+               HBox.hgrow="ALWAYS"/>
+        <Button fx:id="editButton" onAction="#handleEditClient"
+                styleClass="edit-button" visible="false" managed="false"/>
+    </HBox>
+
+    <ScrollPane fx:id="formScrollPane" VBox.vgrow="ALWAYS" fitToWidth="true"
+                styleClass="form-scroll-pane">
+        <VBox spacing="20">
+            <padding>
+                <Insets top="10" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <!-- Fila 1: Folio + Nombre Completo -->
+            <HBox spacing="20" alignment="TOP_LEFT">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelFolio" styleClass="form-label"/>
+                    <TextField fx:id="folioField" styleClass="form-text-field"
+                               promptText=""/>
+                    <Label fx:id="formErrorLabel" styleClass="error-label" visible="false"
+                           wrapText="true" maxWidth="600"/>
+                </VBox>
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelFullName" styleClass="form-label"/>
+                    <TextField fx:id="fullNameField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+            </HBox>
+
+            <!-- Fila 2: INE + Tipo de Contrato -->
+            <HBox spacing="20" alignment="TOP_LEFT">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelIne" styleClass="form-label"/>
+                    <TextField fx:id="ineField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelContractType" styleClass="form-label"/>
+                    <ComboBox fx:id="contractTypeCombo" styleClass="form-combo-box"
+                              prefHeight="40"/>
+                </VBox>
+            </HBox>
+
+            <!-- Fila 3: Domicilio + Colonia -->
+            <HBox spacing="20" alignment="TOP_LEFT">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelAddress" styleClass="form-label"/>
+                    <TextField fx:id="addressField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelNeighborhood" styleClass="form-label"/>
+                    <TextField fx:id="neighborhoodField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+            </HBox>
+
+            <!-- Fila 4: Teléfono + E-mail -->
+            <HBox spacing="20" alignment="TOP_LEFT">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelPhone" styleClass="form-label"/>
+                    <TextField fx:id="phoneField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelEmail" styleClass="form-label"/>
+                    <TextField fx:id="emailField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+            </HBox>
+
+            <!-- Fila 5: Modo de Pago -->
+            <HBox spacing="20" alignment="TOP_LEFT">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelPaymentMethod" styleClass="form-label"/>
+                    <ComboBox fx:id="paymentMethodCombo" styleClass="form-combo-box"
+                              prefHeight="40"/>
+                </VBox>
+            </HBox>
+
+            <!-- Fila 6: Primer Beneficiario + Segundo Beneficiario -->
+            <HBox spacing="20" alignment="TOP_LEFT">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelFirstBeneficiary" styleClass="form-label"/>
+                    <TextField fx:id="firstBeneficiaryField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelSecondBeneficiary" styleClass="form-label"/>
+                    <TextField fx:id="secondBeneficiaryField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+            </HBox>
+
+            <!-- Fila 7: Descripción de la venta + Anualidad -->
+            <HBox spacing="20" alignment="TOP_LEFT">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelSaleDescription" styleClass="form-label"/>
+                    <TextField fx:id="saleDescriptionField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelAnnuity" styleClass="form-label"/>
+                    <TextField fx:id="annuityField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+            </HBox>
+
+            <!-- Fila 8: Manzana + Lote -->
+            <HBox spacing="20" alignment="TOP_LEFT">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelBlock" styleClass="form-label"/>
+                    <TextField fx:id="blockField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelLot" styleClass="form-label"/>
+                    <TextField fx:id="lotField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+            </HBox>
+
+            <!-- Fila 9: Gasto de gestión + Anticipo -->
+            <HBox spacing="20" alignment="TOP_LEFT">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelManagementFee" styleClass="form-label"/>
+                    <HBox fx:id="managementFeeBox" spacing="0" alignment="CENTER_LEFT">
+                        <TextField fx:id="managementFeeField" styleClass="form-text-field currency-field"
+                                   promptText="0.00" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                </VBox>
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelAdvance" styleClass="form-label"/>
+                    <HBox fx:id="advanceBox" spacing="0" alignment="CENTER_LEFT">
+                        <TextField fx:id="advanceField" styleClass="form-text-field currency-field"
+                                   promptText="0.00" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                </VBox>
+            </HBox>
+
+            <!-- Fila 10: Saldo total + Fecha primer pago -->
+            <HBox spacing="20" alignment="TOP_LEFT">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelTotalBalance" styleClass="form-label"/>
+                    <HBox fx:id="totalBalanceBox" spacing="0" alignment="CENTER_LEFT">
+                        <TextField fx:id="totalBalanceField" styleClass="form-text-field currency-field"
+                                   promptText="0.00" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                </VBox>
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelFirstPaymentDate" styleClass="form-label"/>
+                    <DatePicker fx:id="firstPaymentDatePicker" styleClass="form-date-picker"
+                                prefHeight="40"/>
+                </VBox>
+            </HBox>
+
+            <!-- Fila 11: Fecha de contratación + Día de pago -->
+            <HBox spacing="20" alignment="TOP_LEFT">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelContractDate" styleClass="form-label"/>
+                    <DatePicker fx:id="contractDatePicker" styleClass="form-date-picker"
+                                prefHeight="40"/>
+                </VBox>
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelPaymentDay" styleClass="form-label"/>
+                    <TextField fx:id="paymentDayField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+            </HBox>
+
+            <!-- Fila 12: Número de mensualidades + Costo de mensualidad -->
+            <HBox spacing="20" alignment="TOP_LEFT">
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelTotalPayments" styleClass="form-label"/>
+                    <TextField fx:id="totalPaymentsField" styleClass="form-text-field"
+                               promptText=""/>
+                </VBox>
+                <VBox spacing="5" HBox.hgrow="ALWAYS">
+                    <Label fx:id="labelMonthlyPayment" styleClass="form-label"/>
+                    <HBox fx:id="monthlyPaymentBox" spacing="0" alignment="CENTER_LEFT">
+                        <TextField fx:id="monthlyPaymentField" styleClass="form-text-field currency-field"
+                                   promptText="0.00" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                </VBox>
+            </HBox>
+
+            <!-- Botón Guardar -->
+            <HBox alignment="CENTER_RIGHT" VBox.vgrow="NEVER">
+                <padding>
+                    <Insets top="10" right="0" bottom="0" left="0"/>
+                </padding>
+                <Button fx:id="saveButton" onAction="#handleSaveClient"
+                        styleClass="save-button" disable="true"/>
+            </HBox>
+
+            <!-- Success label -->
+            <Label fx:id="formSuccessLabel" styleClass="success-label" visible="false"
+                   wrapText="true" maxWidth="600"/>
+        </VBox>
+    </ScrollPane>
+</VBox>

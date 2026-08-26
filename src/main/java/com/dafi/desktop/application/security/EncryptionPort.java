@@ -1,25 +1,25 @@
 package com.dafi.desktop.application.security;
 
 /**
- * Puerto de salida para operaciones de cifrado/descifrado.
+ * Output port for encryption/decryption operations, implemented by outbound adapters.
  */
 public interface EncryptionPort {
 
     /**
-     * Cifra un texto plano.
+     * Encrypts a plaintext string.
      *
-     * @param plaintext texto a cifrar
-     * @param key       clave de cifrado en formato Base64
-     * @return texto cifrado en formato Base64(iv):Base64(ciphertext+tag)
+     * @param plaintext text to encrypt
+     * @param key       Base64-encoded encryption key
+     * @return ciphertext in the format {@code Base64(iv):Base64(ciphertext+tag)}
      */
     String encrypt(String plaintext, String key);
 
     /**
-     * Descifra un texto cifrado.
+     * Decrypts a ciphertext string.
      *
-     * @param ciphertext texto cifrado en formato Base64(iv):Base64(ciphertext+tag)
-     * @param key        clave de cifrado en formato Base64
-     * @return texto descifrado
+     * @param ciphertext ciphertext in the format {@code Base64(iv):Base64(ciphertext+tag)}
+     * @param key        Base64-encoded encryption key
+     * @return decrypted plaintext
      */
     String decrypt(String ciphertext, String key);
 }

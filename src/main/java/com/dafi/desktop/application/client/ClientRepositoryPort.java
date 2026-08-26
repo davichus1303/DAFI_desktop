@@ -4,28 +4,28 @@ import com.dafi.desktop.domain.client.Client;
 import java.util.List;
 
 /**
- * Puerto de salida para la persistencia de clientes.
+ * Output port for client persistence, implemented by outbound adapters.
  */
 public interface ClientRepositoryPort {
 
     /**
-     * Obtiene todos los clientes almacenados.
+     * Retrieves all stored clients.
      *
-     * @return lista de clientes
+     * @return list of clients (never {@code null})
      */
     List<Client> findAll();
 
     /**
-     * Guarda un cliente.
+     * Inserts or updates a single client, matched by its identifier.
      *
-     * @param client cliente a guardar
+     * @param client client to persist
      */
     void save(Client client);
 
     /**
-     * Guarda todos los clientes proporcionados.
+     * Persists all the given clients.
      *
-     * @param clients lista de clientes a guardar
+     * @param clients list of clients to persist
      */
     void saveAll(List<Client> clients);
 }

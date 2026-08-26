@@ -1,83 +1,239 @@
 # DAFI Desktop
 
-**Despacho de Asesoría Funeraria Integral** - Sistema de administración de clientes
+**Despacho de Asesoria Funeraria Integral** - Client management system
 
-## Descripción
+## Description
 
-Aplicación de escritorio para administrar los clientes de un despacho funerario. Permite gestionar información de contratos, clientes y su estado.
+Desktop application for managing clients of a funeral services firm. Allows managing contract information, clients, contract types, payment methods, and performing bulk imports from Excel.
 
-## Características
+## Features
 
-- Autenticación segura con Argon2id
-- Cifrado de datos con AES-256-GCM
-- Persistencia local en JSON cifrado
-- Interfaz gráfica con JavaFX
-- Arquitectura Hexagonal
+- Secure authentication with Argon2id
+- Data encryption with AES-256-GCM
+- Exportable/importable encryption key across machines
+- Local persistence in encrypted JSON at `~/.dafi/`
+- Graphical interface with JavaFX 21
+- Bulk client import from Excel (.xlsx/.xls) with validation and error reporting
+- Real-time search with debounce
+- Internationalization (i18n) in Spanish
+- Custom application icon
+- Windows packaging with jpackage
 
-## Requisitos
+## Architecture
 
-- Java 17 o superior
-- Maven 3.6+
+Hexagonal Architecture (Ports and Adapters):
 
-## Instalación
-
-```bash
-# Clonar el repositorio
-git clone <url-del-repositorio>
-
-# Navegar al directorio del proyecto
-cd dafi-desktop
-
-# Compilar el proyecto
-mvn clean compile
-
-# Ejecutar la aplicación
-mvn javafx:run
+```
+domain/           Immutable entities, value objects, business rules
+application/      Use cases and ports (interfaces)
+adapters/inbound/ FXML controllers, Excel readers
+adapters/outbound/ JSON repositories, encryption, password hashing
+infrastructure/   Entry point, configuration, i18n
 ```
 
-## Configuración Inicial
-
-Al iniciar la aplicación por primera vez, se solicitará:
-
-1. Nombre de usuario administrador
-2. Contraseña del administrador
-
-La contraseña se almacenará de forma segura utilizando Argon2id.
-
-## Estructura del Proyecto
+## Project structure
 
 ```
 dafi-desktop/
 ├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── com/dafi/desktop/
-│   │   │       ├── domain/          # Entidades y reglas de negocio
-│   │   │       ├── application/     # Casos de uso y puertos
-│   │   │       ├── adapters/        # Adaptadores inbound/outbound
-│   │   │       └── infrastructure/  # Configuración de la aplicación
-│   │   └── resources/
-│   │       ├── fxml/               # Vistas FXML
-│   │       └── css/                # Estilos
-│   └── test/                       # Pruebas unitarias
-└── pom.xml
+│   ├── main/java/com/dafi/desktop/
+│   │   ├── domain/
+│   │   │   ├── client/Client.java                 # Main entity (25 fields, Builder)
+│   │   │   ├── contracttype/ContractTypeCatalog.java
+│   │   │   ├── paymentmethod/PaymentMethodCatalog.java
+│   │   │   ├── shared/
+│   │   │   │   ├── AbstractCatalogEntry.java       # Immutable base for catalogs
+│   │   │   │   ├── CatalogEntry.java               # Catalog interface
+│   │   │   │   └── Email.java                      # Validated value object
+│   │   │   └── DomainException.java
+│   │   ├── application/
+│   │   │   ├── auth/                               # Authentication (ports + use case)
+│   │   │   ├── client/                             # Clients (CRUD + bulk import)
+│   │   │   ├── contracttype/                       # Contract type catalog
+│   │   │   ├── paymentmethod/                      # Payment method catalog
+│   │   │   ├── catalog/                            # Generic repository port
+│   │   │   └── security/                           # Encryption, keys, export/import
+│   │   ├── adapters/
+│   │   │   ├── inbound/
+│   │   │   │   ├── ExcelRow.java                   # Excel row record
+│   │   │   │   ├── ExcelRowReader.java             # Generic Excel reader
+│   │   │   │   └── fx/                             # JavaFX controllers
+│   │   │   └── outbound/
+│   │   │       ├── json/                           # Encrypted JSON repositories
+│   │   │       ├── security/                       # AES-GCM, Argon2, OS-keyring
+│   │   │       ├── CryptoUtils.java                # Encryption/file utility
+│   │   │       └── BulkImportReportWriter.java     # Report generator
+│   │   ├── infrastructure/
+│   │   │   ├── DafiApplication.java                # JavaFX entry point
+│   │   │   ├── DafiLauncher.java                   # Non-JavaFX launcher
+│   │   │   └── I18n.java                           # Internationalization
+│   │   └── shared/utils/
+│   │       └── JsonObjectReader.java               # Typed JSON reader
+│   ├── main/resources/
+│   │   ├── fxml/                                   # FXML views
+│   │   ├── css/                                    # CSS styles
+│   │   ├── i18n/es.json                            # Spanish text strings
+│   │   └── icons/                                  # Window icons (16-256px)
+│   └── test/                                       # 40 unit tests
+├── packaging/
+│   └── dafi.ico                                    # Windows icon
+├── pom.xml
+└── run.sh                                          # Quick run script
 ```
 
-## Seguridad
+## Requirements
 
-- Contraseñas: Argon2id (no almacena texto plano)
-- Datos: AES-256-GCM (confidencialidad + integridad)
-- Claves: Almacenamiento abstracto (extensible a keyring del SO)
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| Java | 17+ | 21 |
+| Maven | 3.6+ | 3.9+ |
+| OS | Linux, Windows, macOS | Any with JavaFX 21 |
 
-## Datos
+## Running
 
-Los datos se almacenan en:`~/.dafi/`:
+### Linux / macOS
 
-- `config/` - Configuración y credenciales
-- `data/` - Datos cifrado de clientes
+```bash
+# Compile
+mvn clean compile
 
-**IMPORTANTE**: Estos archivos contienen información sensible y no deben compartirse.
+# Run
+mvn javafx:run
 
-## Licencia
+# Or use the quick script
+chmod +x run.sh
+./run.sh
+```
 
-Propietario - Uso interno
+### Windows
+
+```bash
+# Compile
+mvn clean compile
+
+# Run
+mvn javafx:run
+```
+
+### Running tests
+
+```bash
+mvn test
+```
+
+## Initial setup
+
+On first launch, the application prompts for:
+
+1. Creating an admin user
+2. Setting a password (stored with Argon2id)
+
+Data is automatically encrypted with AES-256-GCM and stored in `~/.dafi/`.
+
+## Data
+
+Directory `~/.dafi/`:
+
+```
+~/.dafi/
+├── config/
+│   ├── credentials.json    # User credentials (Argon2 hash)
+│   └── encryption.key      # Encryption key (file backup)
+└── data/
+    ├── clients.json        # Encrypted clients
+    ├── contract-types.json # Encrypted contract types
+    └── payment-methods.json # Encrypted payment methods
+```
+
+**IMPORTANT**: These files contain sensitive data and should not be shared.
+
+## Security
+
+| Component | Technology | Detail |
+|-----------|-----------|--------|
+| Passwords | Argon2id | Unique salt per hash, no plaintext |
+| Data | AES-256-GCM | Authenticated encryption (integrity + confidentiality) |
+| Encryption key | OS Keyring / File | Preference: OS keyring; fallback: file on disk |
+| Key export/import | .txt/.key file | Enables data migration between machines |
+
+## Bulk Excel import
+
+### Expected format
+
+All columns are **required** except **E-mail** and **Anticipo (Advance)**:
+
+| Column | Required | Format |
+|--------|:--------:|--------|
+| Folio | Yes | Text |
+| Nombre Completo (Full Name) | Yes | Text |
+| INE | Yes | Text |
+| Tipo de Contrato (Contract Type) | Yes | Text (auto-created if missing) |
+| Domicilio (Address) | Yes | Text |
+| Colonia (Neighborhood) | Yes | Text |
+| Telefono (Phone) | Yes | Text |
+| E-mail | No | text@domain.com |
+| Modo de Pago (Payment Method) | Yes | Text (auto-created if missing) |
+| Primer Beneficiario (First Beneficiary) | Yes | Text |
+| Segundo Beneficiario (Second Beneficiary) | Yes | Text |
+| Descripcion de la Venta (Sale Description) | Yes | Text |
+| Anualidad (Annuity) | Yes | Text |
+| Manzana (Block) | Yes | Text |
+| Lote (Lot) | Yes | Text |
+| Gasto de Gestion (Management Fee) | Yes | Number |
+| Anticipo (Advance) | No | Number |
+| Saldo Total (Total Balance) | Yes | Number |
+| Fecha Primer Pago (First Payment Date) | Yes | dd/MM/yyyy |
+| Fecha Contrato (Contract Date) | Yes | dd/MM/yyyy |
+| Dia de Pago (Payment Day) | Yes | 1-31 |
+| Mensualidades (Total Payments) | Yes | Number >= 1 |
+| Mensualidad (Monthly Payment) | Yes | Number |
+
+### Rules
+
+- Duplicate folios (case/accent insensitive) are skipped
+- Unrecognized columns with content reject the row
+- Dates accept `dd/MM/yyyy` and `yyyy-MM-dd`
+- A report is generated at `~/Documents/DAFI/carga-clientes-*.log`
+
+## Windows packaging
+
+```bash
+# Run the build script (requires JDK 17+ with jpackage)
+construir-instalador.bat
+```
+
+Generates a Windows installer at `packaging/target/jpackage/`.
+
+## Key tools
+
+From the tools button (gear icon) in the clients view:
+
+- **Export key**: Saves the encryption key to a .txt file
+- **Import key**: Restores an encryption key from a file
+
+Useful for migrating data between machines or creating backups.
+
+## Development
+
+### Conventions
+
+- Immutable domain entities (no public setters)
+- Builder pattern for construction with validation
+- Value objects for validated concepts (Email)
+- Ports (interfaces) in the application layer
+- Concrete adapters in adapters/inbound and adapters/outbound
+- SLF4J logging in the serialization layer
+- Javadoc on public classes and methods
+
+### Useful commands
+
+```bash
+mvn clean compile          # Compile
+mvn test                   # Run 40 tests
+mvn javafx:run             # Run application
+mvn javafx:run -Djavafx.args="--width=1280 --height=800"
+```
+
+## License
+
+Proprietary - Internal use

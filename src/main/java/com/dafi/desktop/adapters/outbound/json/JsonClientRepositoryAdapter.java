@@ -1,208 +1,203 @@
 package com.dafi.desktop.adapters.outbound.json;
 
 import com.dafi.desktop.application.client.ClientRepositoryPort;
-import com.dafi.desktop.application.security.EncryptionPort;
-import com.dafi.desktop.application.security.KeyStoragePort;
+import com.dafi.desktop.domain.DomainException;
 import com.dafi.desktop.domain.client.Client;
-import com.dafi.desktop.domain.client.ContractType;
-import com.dafi.desktop.domain.client.PaymentMethod;
-import com.google.gson.*;
-import java.io.*;
+import com.dafi.desktop.adapters.outbound.CryptoUtils;
+import com.dafi.desktop.shared.utils.JsonObjectReader;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigDecimal;
-import java.nio.file.*;
-import java.time.LocalDate;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Adaptador de persistencia de clientes utilizando JSON cifrado.
+ * Outbound adapter implementing {@link ClientRepositoryPort}; it persists
+ * clients as an AES-GCM encrypted JSON file (clients.json) in the application
+ * data directory (typically ~/.dafi/data), mapping fields manually with Gson.
  */
 public class JsonClientRepositoryAdapter implements ClientRepositoryPort {
 
+    private static final Logger log = LoggerFactory.getLogger(JsonClientRepositoryAdapter.class);
+
+    private static final String ARRAY_KEY = "clients";
+    private static final String FILE_NAME = "clients.json";
+
     private final Path filePath;
-    private final EncryptionPort encryption;
-    private final KeyStoragePort keyStorage;
+    private final CryptoUtils cryptoUtils;
     private final Gson gson;
 
-    public JsonClientRepositoryAdapter(Path dataDirectory, EncryptionPort encryption,
-                                       KeyStoragePort keyStorage) {
-        this.filePath = dataDirectory.resolve("clients.json");
-        this.encryption = encryption;
-        this.keyStorage = keyStorage;
+    /**
+     * Creates the adapter.
+     *
+     * @param dataDirectory directory where clients.json is stored
+     * @param cryptoUtils   helper used to encrypt and decrypt the file contents
+     */
+    public JsonClientRepositoryAdapter(Path dataDirectory, CryptoUtils cryptoUtils) {
+        this.filePath = dataDirectory.resolve(FILE_NAME);
+        this.cryptoUtils = cryptoUtils;
         this.gson = new GsonBuilder().setPrettyPrinting().create();
     }
 
+    /**
+     * Loads and decrypts the client file, returning every stored client.
+     *
+     * @return all persisted clients, or an empty list if the file does not exist yet
+     */
     @Override
     public List<Client> findAll() {
-        if (!Files.exists(filePath)) {
+        String json = cryptoUtils.loadEncryptedData(filePath);
+        if (json == null) {
             return new ArrayList<>();
         }
-
-        try {
-            String encryptedContent = Files.readString(filePath);
-            String key = keyStorage.getEncryptionKey();
-
-            if (key == null) {
-                throw new RuntimeException("No se encontró la clave de cifrado");
-            }
-
-            String json = encryption.decrypt(encryptedContent, key);
-            return parseClients(json);
-        } catch (IOException e) {
-            throw new RuntimeException("Error al leer el archivo de clientes", e);
-        }
+        return parseClients(json);
     }
 
+    /**
+     * Inserts or updates a client, replacing any existing client with the same
+     * id, and rewrites the whole encrypted file.
+     *
+     * @param client client to persist
+     */
     @Override
     public void save(Client client) {
         List<Client> clients = findAll();
-        clients.removeIf(c -> c.getId().equals(client.getId()));
+        clients.removeIf(existing -> existing.getId().equals(client.getId()));
         clients.add(client);
         saveAll(clients);
     }
 
+    /**
+     * Serializes the given clients and writes them to the encrypted JSON file,
+     * replacing its previous contents.
+     *
+     * @param clients clients to persist
+     */
     @Override
     public void saveAll(List<Client> clients) {
-        try {
-            String key = keyStorage.getEncryptionKey();
-            if (key == null) {
-                throw new RuntimeException("No se encontró la clave de cifrado");
-            }
-
-            JsonArray clientsArray = new JsonArray();
-            for (Client client : clients) {
-                clientsArray.add(clientToJson(client));
-            }
-
-            JsonObject wrapper = new JsonObject();
-            wrapper.add("clients", clientsArray);
-
-            String json = gson.toJson(wrapper);
-            String encrypted = encryption.encrypt(json, key);
-
-            Files.createDirectories(filePath.getParent());
-            Files.writeString(filePath, encrypted);
-        } catch (IOException e) {
-            throw new RuntimeException("Error al guardar clientes", e);
+        JsonArray clientsArray = new JsonArray();
+        for (Client client : clients) {
+            clientsArray.add(toJson(client));
         }
+
+        JsonObject wrapper = new JsonObject();
+        wrapper.add(ARRAY_KEY, clientsArray);
+
+        cryptoUtils.saveEncryptedData(gson.toJson(wrapper), filePath);
     }
 
     private List<Client> parseClients(String json) {
-        JsonObject wrapper = JsonParser.parseString(json).getAsJsonObject();
-        JsonArray clientsArray = wrapper.getAsJsonArray("clients");
+        try {
+            JsonObject wrapper = JsonParser.parseString(json).getAsJsonObject();
+            if (!wrapper.has(ARRAY_KEY) || wrapper.get(ARRAY_KEY).isJsonNull()) {
+                log.warn("Clave '{}' no encontrada en el archivo JSON de clientes", ARRAY_KEY);
+                return new ArrayList<>();
+            }
+            JsonArray clientsArray = wrapper.getAsJsonArray(ARRAY_KEY);
 
-        List<Client> clients = new ArrayList<>();
-        for (JsonElement element : clientsArray) {
-            clients.add(jsonToClient(element.getAsJsonObject()));
+            List<Client> clients = new ArrayList<>();
+            for (JsonElement element : clientsArray) {
+                appendIfValid(clients, element.getAsJsonObject());
+            }
+            return clients;
+        } catch (Exception e) {
+            log.error("Error al parsear el JSON de clientes, retornando lista vacía", e);
+            return new ArrayList<>();
         }
-        return clients;
     }
 
-    private Client jsonToClient(JsonObject obj) {
-        return new Client(
-                getStringOrEmpty(obj, "id"),
-                getStringOrEmpty(obj, "contractFolio"),
-                getStringOrEmpty(obj, "fullName"),
-                getStringOrEmpty(obj, "ine"),
-                getEnumOrEmpty(obj, "contractType", ContractType.class),
-                getStringOrEmpty(obj, "address"),
-                getStringOrEmpty(obj, "neighborhood"),
-                getStringOrEmpty(obj, "phone"),
-                getStringOrEmpty(obj, "email"),
-                getEnumOrEmpty(obj, "paymentMethod", PaymentMethod.class),
-                getStringOrEmpty(obj, "firstBeneficiary"),
-                getStringOrEmpty(obj, "secondBeneficiary"),
-                getStringOrEmpty(obj, "saleDescription"),
-                getStringOrEmpty(obj, "annuality"),
-                getStringOrEmpty(obj, "block"),
-                getStringOrEmpty(obj, "lot"),
-                getBigDecimalOrZero(obj, "managementFee"),
-                getBigDecimalOrZero(obj, "advance"),
-                getBigDecimalOrZero(obj, "totalBalance"),
-                getDateOrEmpty(obj, "firstPaymentDate"),
-                getDateOrEmpty(obj, "contractDate"),
-                getIntOrZero(obj, "paymentDay"),
-                getIntOrZero(obj, "totalPayments"),
-                getBigDecimalOrZero(obj, "monthlyPayment"),
-                getDateOrNull(obj, "contractEndDate")
-        );
+    /**
+     * Deserializes a single record and appends it to the result list.
+     * Records violating domain invariants are skipped and logged instead of
+     * aborting the whole load, keeping the application usable when a corrupt
+     * or legacy record exists in the file.
+     */
+    private void appendIfValid(List<Client> clients, JsonObject obj) {
+        try {
+            clients.add(fromJson(obj));
+        } catch (DomainException e) {
+            log.error("Registro de cliente inválido omitido ({}). Detalle: {}",
+                    obj.get("id"), e.getMessage());
+        }
     }
 
-    private JsonObject clientToJson(Client client) {
+    private Client fromJson(JsonObject obj) {
+        return Client.builder()
+                .id(JsonObjectReader.getStringOrEmpty(obj, "id"))
+                .contractFolio(JsonObjectReader.getStringOrEmpty(obj, "contractFolio"))
+                .fullName(JsonObjectReader.getStringOrEmpty(obj, "fullName"))
+                .ine(JsonObjectReader.getStringOrEmpty(obj, "ine"))
+                .contractType(JsonObjectReader.getStringOrEmpty(obj, "contractType"))
+                .address(JsonObjectReader.getStringOrEmpty(obj, "address"))
+                .neighborhood(JsonObjectReader.getStringOrEmpty(obj, "neighborhood"))
+                .phone(JsonObjectReader.getStringOrEmpty(obj, "phone"))
+                .email(JsonObjectReader.getStringOrEmpty(obj, "email"))
+                .paymentMethod(JsonObjectReader.getStringOrEmpty(obj, "paymentMethod"))
+                .firstBeneficiary(JsonObjectReader.getStringOrEmpty(obj, "firstBeneficiary"))
+                .secondBeneficiary(JsonObjectReader.getStringOrEmpty(obj, "secondBeneficiary"))
+                .saleDescription(JsonObjectReader.getStringOrEmpty(obj, "saleDescription"))
+                .annuity(JsonObjectReader.getStringOrEmpty(obj, "annuity"))
+                .block(JsonObjectReader.getStringOrEmpty(obj, "block"))
+                .lot(JsonObjectReader.getStringOrEmpty(obj, "lot"))
+                .managementFee(JsonObjectReader.getBigDecimalOrZero(obj, "managementFee"))
+                .advance(JsonObjectReader.getBigDecimalOrZero(obj, "advance"))
+                .totalBalance(JsonObjectReader.getBigDecimalOrZero(obj, "totalBalance"))
+                .firstPaymentDate(JsonObjectReader.getDateOrNull(obj, "firstPaymentDate"))
+                .contractDate(JsonObjectReader.getDateOrNull(obj, "contractDate"))
+                .paymentDay(JsonObjectReader.getIntOrZero(obj, "paymentDay"))
+                .totalPayments(JsonObjectReader.getIntOrZero(obj, "totalPayments"))
+                .monthlyPayment(JsonObjectReader.getBigDecimalOrZero(obj, "monthlyPayment"))
+                .contractEndDate(JsonObjectReader.getDateOrNull(obj, "contractEndDate"))
+                .build();
+    }
+
+    private JsonObject toJson(Client client) {
         JsonObject obj = new JsonObject();
         obj.addProperty("id", client.getId());
-        obj.addProperty("contractFolio", client.getContractFolio() != null ? client.getContractFolio() : "");
-        obj.addProperty("fullName", client.getFullName() != null ? client.getFullName() : "");
-        obj.addProperty("ine", client.getIne() != null ? client.getIne() : "");
-        obj.addProperty("contractType", client.getContractType() != null ? client.getContractType().name() : "");
-        obj.addProperty("address", client.getAddress() != null ? client.getAddress() : "");
-        obj.addProperty("neighborhood", client.getNeighborhood() != null ? client.getNeighborhood() : "");
-        obj.addProperty("phone", client.getPhone() != null ? client.getPhone() : "");
-        obj.addProperty("email", client.getEmail() != null ? client.getEmail() : "");
-        obj.addProperty("paymentMethod", client.getPaymentMethod() != null ? client.getPaymentMethod().name() : "");
-        obj.addProperty("firstBeneficiary", client.getFirstBeneficiary() != null ? client.getFirstBeneficiary() : "");
-        obj.addProperty("secondBeneficiary", client.getSecondBeneficiary() != null ? client.getSecondBeneficiary() : "");
-        obj.addProperty("saleDescription", client.getSaleDescription() != null ? client.getSaleDescription() : "");
-        obj.addProperty("annuality", client.getAnnuity() != null ? client.getAnnuity() : "");
-        obj.addProperty("block", client.getBlock() != null ? client.getBlock() : "");
-        obj.addProperty("lot", client.getLot() != null ? client.getLot() : "");
-        obj.addProperty("managementFee", client.getManagementFee() != null ? client.getManagementFee().toString() : "0");
-        obj.addProperty("advance", client.getAdvance() != null ? client.getAdvance().toString() : "0");
-        obj.addProperty("totalBalance", client.getTotalBalance() != null ? client.getTotalBalance().toString() : "0");
-        obj.addProperty("firstPaymentDate", client.getFirstPaymentDate() != null ? client.getFirstPaymentDate().toString() : "");
-        obj.addProperty("contractDate", client.getContractDate() != null ? client.getContractDate().toString() : "");
+        obj.addProperty("contractFolio", orEmpty(client.getContractFolio()));
+        obj.addProperty("fullName", orEmpty(client.getFullName()));
+        obj.addProperty("ine", orEmpty(client.getIne()));
+        obj.addProperty("contractType", orEmpty(client.getContractType()));
+        obj.addProperty("address", orEmpty(client.getAddress()));
+        obj.addProperty("neighborhood", orEmpty(client.getNeighborhood()));
+        obj.addProperty("phone", orEmpty(client.getPhone()));
+        obj.addProperty("email", orEmpty(client.getEmail()));
+        obj.addProperty("paymentMethod", orEmpty(client.getPaymentMethod()));
+        obj.addProperty("firstBeneficiary", orEmpty(client.getFirstBeneficiary()));
+        obj.addProperty("secondBeneficiary", orEmpty(client.getSecondBeneficiary()));
+        obj.addProperty("saleDescription", orEmpty(client.getSaleDescription()));
+        obj.addProperty("annuity", orEmpty(client.getAnnuity()));
+        obj.addProperty("block", orEmpty(client.getBlock()));
+        obj.addProperty("lot", orEmpty(client.getLot()));
+        obj.addProperty("managementFee", decimalOrZero(client.getManagementFee()));
+        obj.addProperty("advance", decimalOrZero(client.getAdvance()));
+        obj.addProperty("totalBalance", decimalOrZero(client.getTotalBalance()));
+        obj.addProperty("firstPaymentDate", dateOrNull(client.getFirstPaymentDate()));
+        obj.addProperty("contractDate", dateOrNull(client.getContractDate()));
         obj.addProperty("paymentDay", client.getPaymentDay());
         obj.addProperty("totalPayments", client.getTotalPayments());
-        obj.addProperty("monthlyPayment", client.getMonthlyPayment() != null ? client.getMonthlyPayment().toString() : "0");
-        obj.addProperty("contractEndDate", client.getContractEndDate() != null ? client.getContractEndDate().toString() : "");
+        obj.addProperty("monthlyPayment", decimalOrZero(client.getMonthlyPayment()));
+        obj.addProperty("contractEndDate", dateOrNull(client.getContractEndDate()));
         return obj;
     }
 
-    private String getStringOrEmpty(JsonObject obj, String key) {
-        return obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsString() : "";
+    private String orEmpty(String value) {
+        return value != null ? value : "";
     }
 
-    private <E extends Enum<E>> E getEnumOrEmpty(JsonObject obj, String key, Class<E> enumClass) {
-        String value = getStringOrEmpty(obj, key);
-        if (value.isEmpty()) return null;
-        try {
-            return Enum.valueOf(enumClass, value);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+    private String decimalOrZero(BigDecimal value) {
+        return value != null ? value.toPlainString() : "0";
     }
 
-    private BigDecimal getBigDecimalOrZero(JsonObject obj, String key) {
-        String value = getStringOrEmpty(obj, key);
-        if (value.isEmpty()) return BigDecimal.ZERO;
-        try {
-            return new BigDecimal(value);
-        } catch (NumberFormatException e) {
-            return BigDecimal.ZERO;
-        }
-    }
-
-    private LocalDate getDateOrEmpty(JsonObject obj, String key) {
-        String value = getStringOrEmpty(obj, key);
-        if (value.isEmpty()) return LocalDate.now();
-        try {
-            return LocalDate.parse(value);
-        } catch (Exception e) {
-            return LocalDate.now();
-        }
-    }
-
-    private LocalDate getDateOrNull(JsonObject obj, String key) {
-        String value = getStringOrEmpty(obj, key);
-        if (value.isEmpty()) return null;
-        try {
-            return LocalDate.parse(value);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private int getIntOrZero(JsonObject obj, String key) {
-        return obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsInt() : 0;
+    private String dateOrNull(java.time.LocalDate value) {
+        return value != null ? value.toString() : "";
     }
 }

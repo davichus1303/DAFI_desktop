@@ -19,7 +19,8 @@
 
             <Label text="DAFI Desktop" styleClass="login-title"/>
 
-            <Label text="Despacho de Asesoría Funeraria Integral" styleClass="login-subtitle"/>
+            <Label text="Despacho de Asesoría Funeraria" styleClass="login-subtitle"/>
+            <Label text="Integral" styleClass="login-subtitle"/>
 
             <VBox spacing="12" VBox.vgrow="NEVER">
                 <padding>

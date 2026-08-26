@@ -1,7 +1,7 @@
 package com.dafi.desktop.application.auth;
 
 /**
- * Caso de uso para autenticación de usuarios.
+ * Use case for user authentication against stored credentials.
  */
 public class AuthenticateUserUseCase {
 
@@ -9,10 +9,10 @@ public class AuthenticateUserUseCase {
     private final PasswordHasherPort passwordHasher;
 
     /**
-     * Constructor del caso de uso.
+     * Creates the use case.
      *
-     * @param credentialsStorage puerto de almacenamiento de credenciales
-     * @param passwordHasher     puerto de hashing de contraseñas
+     * @param credentialsStorage credential storage port
+     * @param passwordHasher     password hashing port
      */
     public AuthenticateUserUseCase(CredentialsStoragePort credentialsStorage,
                                    PasswordHasherPort passwordHasher) {
@@ -21,11 +21,11 @@ public class AuthenticateUserUseCase {
     }
 
     /**
-     * Autentica al usuario con las credenciales proporcionadas.
+     * Authenticates a user with the given credentials.
      *
-     * @param username nombre de usuario
-     * @param password contraseña en texto plano
-     * @return true si la autenticación es exitosa
+     * @param username username
+     * @param password plaintext password
+     * @return {@code true} if authentication succeeds
      */
     public boolean authenticate(String username, String password) {
         String storedHash = credentialsStorage.getStoredHash(username);
@@ -39,19 +39,19 @@ public class AuthenticateUserUseCase {
     }
 
     /**
-     * Verifica si existe un usuario configurado en el sistema.
+     * Checks whether an administrator user is already configured in the system.
      *
-     * @return true si existe al menos un usuario
+     * @return {@code true} if at least one user exists
      */
     public boolean hasConfiguredUser() {
         return credentialsStorage.hasConfiguredUser();
     }
 
     /**
-     * Registra un nuevo usuario administrador.
+     * Registers a new administrator user with the given credentials.
      *
-     * @param username nombre de usuario
-     * @param password contraseña en texto plano
+     * @param username username
+     * @param password plaintext password
      */
     public void registerAdmin(String username, String password) {
         PasswordHasherPort.HashResult hashResult = passwordHasher.hash(password);

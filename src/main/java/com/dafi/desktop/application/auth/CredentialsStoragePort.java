@@ -1,39 +1,39 @@
 package com.dafi.desktop.application.auth;
 
 /**
- * Puerto de salida para el almacenamiento de credenciales.
+ * Output port for credential storage, implemented by outbound adapters.
  */
 public interface CredentialsStoragePort {
 
     /**
-     * Obtiene el hash almacenado del usuario.
+     * Retrieves the stored password hash for a user.
      *
-     * @param username nombre de usuario
-     * @return hash del password o null si no existe
+     * @param username username to look up
+     * @return stored hash, or {@code null} if the user does not exist
      */
     String getStoredHash(String username);
 
     /**
-     * Obtiene el salt almacenado del usuario.
+     * Retrieves the stored salt for a user.
      *
-     * @param username nombre de usuario
-     * @return salt en formato Base64 o null si no existe
+     * @param username username to look up
+     * @return Base64-encoded salt, or {@code null} if the user does not exist
      */
     String getStoredSalt(String username);
 
     /**
-     * Guarda las credenciales del usuario.
+     * Persists the credentials of a user.
      *
-     * @param username    nombre de usuario
-     * @param hashedPassword hash del password
-     * @param salt        salt en formato Base64
+     * @param username       username
+     * @param hashedPassword hashed password
+     * @param salt           Base64-encoded salt
      */
     void storeCredentials(String username, String hashedPassword, String salt);
 
     /**
-     * Verifica si existe un usuario configurado.
+     * Checks whether at least one user is configured.
      *
-     * @return true si existe al menos un usuario
+     * @return {@code true} if a configured user exists
      */
     boolean hasConfiguredUser();
 }

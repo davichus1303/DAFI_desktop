@@ -2,13 +2,13 @@ package com.dafi.desktop.infrastructure;
 
 import com.dafi.desktop.adapters.inbound.fx.SceneFactory;
 import com.dafi.desktop.application.auth.AuthenticateUserUseCase;
-import com.dafi.desktop.application.security.KeyStoragePort;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.image.Image;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -17,16 +17,24 @@ import javax.crypto.SecretKey;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.List;
+import java.util.stream.Stream;
 
 /**
- * Clase principal de la aplicación DAFI Desktop.
- * Punto de entrada de la aplicación JavaFX.
+ * Main class of the DAFI Desktop application.
+ * Entry point of the JavaFX application.
  */
 public class DafiApplication extends Application {
 
     private static final Path CONFIG_DIR = Path.of(System.getProperty("user.home"), ".dafi", "config");
     private static final Path DATA_DIR = Path.of(System.getProperty("user.home"), ".dafi", "data");
 
+    /**
+     * Initializes internationalization and scene infrastructure, runs
+     * first-time setup when no user is configured, then shows the login window.
+     *
+     * @param primaryStage the primary stage for this application
+     */
     @Override
     public void start(Stage primaryStage) {
         I18n.getInstance();
@@ -42,9 +50,16 @@ public class DafiApplication extends Application {
         I18n i18n = I18n.getInstance();
         Scene loginScene = SceneFactory.createLoginScene(primaryStage);
         primaryStage.setScene(loginScene);
-        primaryStage.setTitle(i18n.get("app.title") + " - " + i18n.get("login.title"));
+        primaryStage.setTitle(i18n.get("app.title") + " " + i18n.get("app.brand") + " - " + i18n.get("login.title"));
         primaryStage.setResizable(false);
+        primaryStage.getIcons().setAll(loadAppIcons());
         primaryStage.show();
+    }
+
+    private List<Image> loadAppIcons() {
+        return Stream.of(16, 24, 32, 48, 64, 128, 256)
+                .map(size -> new Image("/icons/icon-" + size + ".png"))
+                .toList();
     }
 
     private AuthenticateUserUseCase createAuthenticateUseCase() {
@@ -97,17 +112,16 @@ public class DafiApplication extends Application {
             SecretKey secretKey = keyGen.generateKey();
             String encodedKey = Base64.getEncoder().encodeToString(secretKey.getEncoded());
 
-            KeyStoragePort keyStorage = new com.dafi.desktop.adapters.outbound.json.FileKeyStorageAdapter(CONFIG_DIR);
-            keyStorage.storeEncryptionKey(encodedKey);
+            SceneFactory.getKeyStoragePort().storeEncryptionKey(encodedKey);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Error al generar la clave de cifrado", e);
         }
     }
 
     /**
-     * Punto de entrada principal.
+     * Application entry point.
      *
-     * @param args argumentos de línea de comandos
+     * @param args command-line arguments
      */
     public static void main(String[] args) {
         launch(args);

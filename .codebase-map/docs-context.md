@@ -4,16 +4,30 @@
 
 README.md
 - DAFI Desktop
-  - Descripción
-  - Características
-  - Requisitos
-  - Instalación
-- Clonar el repositorio
-- Navegar al directorio del proyecto
-- Compilar el proyecto
-- Ejecutar la aplicación
-  - Configuración Inicial
-  - Estructura del Proyecto
-  - Seguridad
-  - Datos
-  - Licencia
+  - Description
+  - Features
+  - Architecture
+  - Project structure
+  - Requirements
+  - Running
+    - Linux / macOS
+- Compile
+- Run
+- Or use the quick script
+    - Windows
+- Compile
+- Run
+    - Running tests
+  - Initial setup
+  - Data
+  - Security
+  - Bulk Excel import
+    - Expected format
+    - Rules
+  - Windows packaging
+- Run the build script (requires JDK 17+ with jpackage)
+  - Key tools
+  - Development
+    - Conventions
+    - Useful commands
+  - License

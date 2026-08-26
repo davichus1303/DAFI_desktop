@@ -1,8 +1,7 @@
 package com.dafi.desktop.domain;
 
 import com.dafi.desktop.domain.client.Client;
-import com.dafi.desktop.domain.client.ContractType;
-import com.dafi.desktop.domain.client.PaymentMethod;
+import com.dafi.desktop.domain.client.Client.Builder;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -12,7 +11,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 class ClientTest {
 
     @Test
@@ -21,7 +19,7 @@ class ClientTest {
         Client client = createClient(startDate, 12);
 
         LocalDate expectedEndDate = LocalDate.of(2025, 1, 15);
-        assertEquals(expectedEndDate, client.calculateContractEndDate());
+        assertEquals(expectedEndDate, client.getContractEndDate());
     }
 
     @Test
@@ -30,7 +28,39 @@ class ClientTest {
         Client client = createClient(startDate, 24);
 
         LocalDate expectedEndDate = LocalDate.of(2026, 6, 1);
-        assertEquals(expectedEndDate, client.calculateContractEndDate());
+        assertEquals(expectedEndDate, client.getContractEndDate());
+    }
+
+    @Test
+    void testContractEndDateComputedWhenNotProvided() {
+        Client client = Client.builder()
+                .id("id-1")
+                .contractFolio("F-1")
+                .fullName("Cliente de Prueba")
+                .contractDate(LocalDate.of(2024, 3, 15))
+                .firstPaymentDate(LocalDate.of(2024, 4, 5))
+                .paymentDay(5)
+                .totalPayments(18)
+                .build();
+
+        assertEquals(LocalDate.of(2025, 9, 15), client.getContractEndDate());
+    }
+
+    @Test
+    void testContractEndDateKeptWhenProvided() {
+        LocalDate explicitEndDate = LocalDate.of(2030, 1, 1);
+        Client client = Client.builder()
+                .id("id-2")
+                .contractFolio("F-2")
+                .fullName("Cliente de Prueba")
+                .contractDate(LocalDate.of(2024, 3, 15))
+                .firstPaymentDate(LocalDate.of(2024, 4, 5))
+                .paymentDay(5)
+                .totalPayments(12)
+                .contractEndDate(explicitEndDate)
+                .build();
+
+        assertEquals(explicitEndDate, client.getContractEndDate());
     }
 
     @Test
@@ -42,7 +72,7 @@ class ClientTest {
         List<Client> clients = Arrays.asList(client1, client2, client3);
 
         List<Client> sorted = clients.stream()
-                .sorted(Comparator.comparing(Client::calculateContractEndDate))
+                .sorted(Comparator.comparing(Client::getContractEndDate))
                 .toList();
 
         assertEquals(client3, sorted.get(0));
@@ -53,16 +83,10 @@ class ClientTest {
     @Test
     void testClientEqualityById() {
         Client client1 = createClient(LocalDate.of(2024, 1, 1), 12);
-        Client client2 = new Client(
+        Client client2 = buildTestClient(
                 "different-id",
-                "FOL-001", "Test Client", "INE-TEST",
-                ContractType.STANDARD, "Domicilio Test", "Colonia Test",
-                "5551234567", "test@email.com", PaymentMethod.CASH,
-                "Beneficiario 1", "Beneficiario 2", "Venta test",
-                "2024", "Mza-1", "Lote-1",
-                new BigDecimal("1000"), new BigDecimal("500"), new BigDecimal("6000"),
                 LocalDate.of(2024, 6, 1), LocalDate.of(2024, 1, 1),
-                15, 6, new BigDecimal("500"),
+                6,
                 LocalDate.of(2024, 7, 1)
         );
 
@@ -78,18 +102,108 @@ class ClientTest {
         assertEquals(client1.hashCode(), client2.hashCode());
     }
 
+    @Test
+    void testBuildRejectsBlankRequiredFields() {
+        assertThrows(DomainException.class, () ->
+                validBuilder().id("").build());
+        assertThrows(DomainException.class, () ->
+                validBuilder().contractFolio("  ").build());
+        assertThrows(DomainException.class, () ->
+                validBuilder().fullName(null).build());
+    }
+
+    @Test
+    void testBuildRejectsMissingDates() {
+        assertThrows(DomainException.class, () ->
+                validBuilder().contractDate(null).build());
+        assertThrows(DomainException.class, () ->
+                validBuilder().firstPaymentDate(null).build());
+    }
+
+    @Test
+    void testBuildRejectsInvalidPaymentConfiguration() {
+        assertThrows(DomainException.class, () ->
+                validBuilder().totalPayments(0).build());
+        assertThrows(DomainException.class, () ->
+                validBuilder().paymentDay(0).build());
+        assertThrows(DomainException.class, () ->
+                validBuilder().paymentDay(32).build());
+    }
+
+    @Test
+    void testBuildRejectsNegativeAmounts() {
+        assertThrows(DomainException.class, () ->
+                validBuilder().totalBalance(new BigDecimal("-1")).build());
+        assertThrows(DomainException.class, () ->
+                validBuilder().monthlyPayment(new BigDecimal("-0.01")).build());
+    }
+
+    @Test
+    void testBuildRejectsMalformedEmail() {
+        assertThrows(DomainException.class, () ->
+                validBuilder().email("not-an-email").build());
+    }
+
+    @Test
+    void testBuildAcceptsBlankEmailAndZeroAmounts() {
+        Client client = validBuilder()
+                .email("")
+                .advance(BigDecimal.ZERO)
+                .build();
+
+        assertEquals("", client.getEmail());
+    }
+
+    private Builder validBuilder() {
+        return Client.builder()
+                .id("test-id")
+                .contractFolio("FOL-001")
+                .fullName("Test Client")
+                .firstPaymentDate(LocalDate.of(2024, 1, 1))
+                .contractDate(LocalDate.of(2024, 1, 1))
+                .paymentDay(15)
+                .totalPayments(12)
+                .totalBalance(new BigDecimal("6000"))
+                .monthlyPayment(new BigDecimal("500"));
+    }
+
     private Client createClient(LocalDate startDate, int totalPayments) {
-        return new Client(
+        return buildTestClient(
                 "test-id",
-                "FOL-001", "Test Client", "INE-TEST",
-                ContractType.STANDARD, "Domicilio Test", "Colonia Test",
-                "5551234567", "test@email.com", PaymentMethod.CASH,
-                "Beneficiario 1", "Beneficiario 2", "Venta test",
-                "2024", "Mza-1", "Lote-1",
-                new BigDecimal("1000"), new BigDecimal("500"), new BigDecimal("6000"),
                 startDate, startDate,
-                15, totalPayments, new BigDecimal("500"),
+                totalPayments,
                 startDate.plusMonths(totalPayments)
         );
+    }
+
+    private Client buildTestClient(String id, LocalDate firstPaymentDate, LocalDate contractDate,
+                                   int totalPayments, LocalDate contractEndDate) {
+        return Client.builder()
+                .id(id)
+                .contractFolio("FOL-001")
+                .fullName("Test Client")
+                .ine("INE-TEST")
+                .contractType("Estándar")
+                .address("Domicilio Test")
+                .neighborhood("Colonia Test")
+                .phone("5551234567")
+                .email("test@email.com")
+                .paymentMethod("Efectivo")
+                .firstBeneficiary("Beneficiario 1")
+                .secondBeneficiary("Beneficiario 2")
+                .saleDescription("Venta test")
+                .annuity("2024")
+                .block("Mza-1")
+                .lot("Lote-1")
+                .managementFee(new BigDecimal("1000"))
+                .advance(new BigDecimal("500"))
+                .totalBalance(new BigDecimal("6000"))
+                .firstPaymentDate(firstPaymentDate)
+                .contractDate(contractDate)
+                .paymentDay(15)
+                .totalPayments(totalPayments)
+                .monthlyPayment(new BigDecimal("500"))
+                .contractEndDate(contractEndDate)
+                .build();
     }
 }

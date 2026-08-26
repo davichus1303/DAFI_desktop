@@ -1,0 +1,197 @@
+name: CI
+
+on:
+  push:
+    branches: ['**', '!master']
+  pull_request:
+    branches: ['**']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install display dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgtk-3-0 libgl1 libglib2.0-0 libasound2 libx11-6 libxext6 libxrender1 libxtst6 libxi6
+
+      - name: Compile
+        run: mvn -B compile
+
+      - name: Run tests
+        run: mvn -B test
+        env:
+          DISPLAY: ':99'
+          XVFB: 'true'
+
+      - name: Package JAR
+        run: mvn -B package -DskipTests
+
+      - name: Verify packaged JAR
+        run: |
+          ls -lh target/*.jar
+          echo "JAR packaged successfully"
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dafi-desktop-jar
+          path: target/*.jar
+          retention-days: 7
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    timeout-minutes: 15
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Compile
+        run: mvn -B compile
+
+      - name: Run tests
+        run: mvn -B test
+
+      - name: Package
+        run: mvn -B package -DskipTests
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dafi-desktop-windows
+          path: target/*.jar
+          retention-days: 7
+
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Check compilation warnings
+        run: mvn -B compile -Dmaven.compiler.showWarnings=true 2>&1 | tee compile-output.txt
+        continue-on-error: true
+
+      - name: Analyze warnings
+        run: |
+          WARNINGS=$(grep -c "WARNING" compile-output.txt || true)
+          echo "Compilation warnings found: $WARNINGS"
+          if [ "$WARNINGS" -gt 10 ]; then
+            echo "::warning::High number of compilation warnings: $WARNINGS"
+          fi
+
+      - name: Check for unused imports
+        run: |
+          echo "Checking for common code issues..."
+          find src/main/java -name "*.java" -exec grep -l "^import.*\*;" {} \; | while read f; do
+            echo "::warning file=$f::Wildcard import detected"
+          done
+
+      - name: Verify test count
+        run: |
+          TESTS=$(mvn -B test 2>&1 | grep "Tests run:" | tail -1 | sed 's/.*Tests run: \([0-9]*\).*/\1/')
+          echo "Total tests executed: $TESTS"
+          if [ "$TESTS" -lt 40 ]; then
+            echo "::error::Test count below minimum: $TESTS (expected 40+)"
+            exit 1
+          fi
+
+  security:
+    name: Security Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Scanning for potential secrets..."
+          PATTERNS=(
+            "password\s*=\s*\"[^\"]+\""
+            "api[_-]?key\s*=\s*\"[^\"]+\""
+            "secret\s*=\s*\"[^\"]+\""
+            "token\s*=\s*\"[^\"]+\""
+          )
+          FOUND=0
+          for pattern in "${PATTERNS[@]}"; do
+            MATCHES=$(grep -rn -E "$pattern" src/main/java --include="*.java" | grep -v "test" | grep -v "Test" || true)
+            if [ -n "$MATCHES" ]; then
+              echo "::warning::Potential hardcoded secret found:"
+              echo "$MATCHES"
+              FOUND=1
+            fi
+          done
+          if [ "$FOUND" -eq 1 ]; then
+            echo "::warning::Potential secrets detected. Review findings above."
+          else
+            echo "No hardcoded secrets detected."
+          fi
+
+      - name: Check for dangerous patterns
+        run: |
+          echo "Checking for insecure patterns..."
+          INSECURE=$(grep -rn "MD5\|SHA-1\|DES\|ECB" src/main/java --include="*.java" || true)
+          if [ -n "$INSECURE" ]; then
+            echo "::error::Insecure crypto patterns found:"
+            echo "$INSECURE"
+            exit 1
+          fi
+          echo "No insecure crypto patterns found."
+
+      - name: Check for SQL injection patterns
+        run: |
+          SQL_INJECT=$(grep -rn "Statement.*execute.*+" src/main/java --include="*.java" || true)
+          if [ -n "$SQL_INJECT" ]; then
+            echo "::warning::Potential SQL injection pattern found:"
+            echo "$SQL_INJECT"
+          fi
+
+      - name: Verify AES-256 usage
+        run: |
+          AES=$(grep -rn "AES" src/main/java --include="*.java" || true)
+          if [ -n "$AES" ]; then
+            echo "AES encryption detected:"
+            echo "$AES"
+          else
+            echo "::warning::No AES encryption patterns found"
+          fi

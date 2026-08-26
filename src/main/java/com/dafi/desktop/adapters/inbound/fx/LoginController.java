@@ -10,7 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Controlador de la pantalla de inicio de sesión.
+ * Controller for the login screen.
+ * Authenticates the credentials against the {@link com.dafi.desktop.application.auth.AuthenticateUserUseCase}
+ * on a background task and swaps to the main scene on success.
  */
 public class LoginController {
 
@@ -32,7 +34,7 @@ public class LoginController {
     private Stage primaryStage;
 
     /**
-     * Inicializa el controlador después de que el FXML se ha cargado.
+     * Applies i18n texts after the FXML has been loaded.
      */
     @FXML
     public void initialize() {
@@ -42,10 +44,20 @@ public class LoginController {
         loginButton.setText(i18n.get("login.button"));
     }
 
+    /**
+     * Sets the authentication use case invoked on login.
+     *
+     * @param authenticateUseCase authentication use case
+     */
     public void setAuthenticateUseCase(com.dafi.desktop.application.auth.AuthenticateUserUseCase authenticateUseCase) {
         this.authenticateUseCase = authenticateUseCase;
     }
 
+    /**
+     * Sets the primary stage used to swap to the main scene after a successful login.
+     *
+     * @param primaryStage application primary stage
+     */
     public void setPrimaryStage(Stage primaryStage) {
         this.primaryStage = primaryStage;
     }
@@ -58,55 +70,70 @@ public class LoginController {
 
         log.info("Intento de login para usuario: {}", username);
 
-        if (username.isEmpty() || password.isEmpty()) {
+        if (hasEmptyCredentials()) {
             showError(i18n.get("login.error.empty"));
             return;
         }
 
-        loginButton.setDisable(true);
+        setLoginInProgress(true);
+        authenticateInBackground(username, password, i18n);
+    }
 
-        Task<Boolean> loginTask = new Task<>() {
-            @Override
-            protected Boolean call() {
-                try {
-                    return authenticateUseCase.authenticate(username, password);
-                } catch (Exception e) {
-                    log.error("Error durante autenticación", e);
-                    throw e;
-                }
-            }
-        };
+    private boolean hasEmptyCredentials() {
+        return usernameField.getText().isEmpty() || passwordField.getText().isEmpty();
+    }
 
-        loginTask.setOnSucceeded(event -> {
-            Boolean success = loginTask.getValue();
-            log.info("Resultado autenticación: {}", success);
-            Platform.runLater(() -> {
-                loginButton.setDisable(false);
-                if (success) {
-                    try {
-                        SceneFactory factory = new SceneFactory();
-                        primaryStage.setScene(factory.createMainScene(primaryStage, authenticateUseCase));
-                        primaryStage.setTitle(i18n.get("app.title") + " - " + i18n.get("app.subtitle"));
-                    } catch (Exception e) {
-                        log.error("Error al crear escena principal", e);
-                        showError("Error al cargar la aplicación: " + e.getMessage());
-                    }
-                } else {
-                    showError(i18n.get("login.error"));
-                }
-            });
-        });
+    private void setLoginInProgress(boolean inProgress) {
+        loginButton.setDisable(inProgress);
+    }
 
-        loginTask.setOnFailed(event -> {
-            log.error("Login task falló", loginTask.getException());
-            Platform.runLater(() -> {
-                loginButton.setDisable(false);
-                showError(i18n.get("login.error.general") + ": " + 
-                    (loginTask.getException() != null ? loginTask.getException().getMessage() : "unknown"));
-            });
-        });
+    private void authenticateInBackground(String username, String password, I18n i18n) {
+        Task<Boolean> loginTask = createAuthenticationTask(username, password);
+
+        loginTask.setOnSucceeded(event -> handleAuthenticationSuccess(loginTask.getValue(), i18n));
+        loginTask.setOnFailed(event -> handleAuthenticationFailure(loginTask, i18n));
 
         new Thread(loginTask).start();
+    }
+
+    private Task<Boolean> createAuthenticationTask(String username, String password) {
+        return new Task<>() {
+            @Override
+            protected Boolean call() {
+                return authenticateUseCase.authenticate(username, password);
+            }
+        };
+    }
+
+    private void handleAuthenticationSuccess(Boolean success, I18n i18n) {
+        log.info("Resultado autenticación: {}", success);
+        Platform.runLater(() -> {
+            setLoginInProgress(false);
+            if (success) {
+                openMainWindow(i18n);
+            } else {
+                showError(i18n.get("login.error"));
+            }
+        });
+    }
+
+    private void openMainWindow(I18n i18n) {
+        try {
+            primaryStage.setScene(SceneFactory.createMainScene(primaryStage, authenticateUseCase));
+            primaryStage.setTitle(i18n.get("app.title") + " " + i18n.get("app.brand") + " - " + i18n.get("app.subtitle"));
+        } catch (Exception e) {
+            log.error("Error al crear escena principal", e);
+            showError("Error al cargar la aplicación: " + e.getMessage());
+        }
+    }
+
+    private void handleAuthenticationFailure(Task<Boolean> loginTask, I18n i18n) {
+        log.error("Login task falló", loginTask.getException());
+        Platform.runLater(() -> {
+            setLoginInProgress(false);
+            showError(i18n.get("login.error.general") + ": " +
+                (loginTask.getException() != null ? loginTask.getException().getMessage() : "unknown"));
+        });
     }
 
     private void showError(String message) {

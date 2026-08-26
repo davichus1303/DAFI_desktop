@@ -1,0 +1,407 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. 1.0.0)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+env:
+  APP_NAME: DAFI-Desktop
+  APP_VERSION: '1.0.0'
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install display dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgtk-3-0 libgl1 libglib2.0-0
+
+      - name: Compile
+        run: mvn -B compile
+
+      - name: Run tests
+        run: mvn -B test
+        env:
+          DISPLAY: ':99'
+
+      - name: Verify test count
+        run: |
+          TESTS=$(mvn -B test 2>&1 | grep "Tests run:" | tail -1 | sed 's/.*Tests run: \([0-9]*\).*/\1/')
+          echo "Tests executed: $TESTS"
+          if [ "$TESTS" -lt 40 ]; then
+            echo "::error::Test count below minimum: $TESTS"
+            exit 1
+          fi
+
+  build-deb:
+    name: Build .deb (Ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install packaging dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgtk-3-0 libgl1 libglib2.0-0 libasound2 dpkg-dev fakeroot
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=1.0.0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Compile and package JAR
+        run: |
+          mvn -B clean package -DskipTests
+
+      - name: Create app image with jpackage
+        run: |
+          jpackage \
+            --input target/classes \
+            --main-class com.dafi.desktop.infrastructure.DafiLauncher \
+            --name ${{ env.APP_NAME }} \
+            --app-version ${{ steps.version.outputs.version }} \
+            --type app-image \
+            --dest target/jpackage \
+            --icon packaging/dafi.ico \
+            --java-options "-Dfile.encoding=UTF-8" \
+            --java-options "--add-modules javafx.controls,javafx.fxml" \
+            --java-options "-Xmx512m" \
+            --vendor "DAFI" \
+            --description "Despacho de Asesoria Funeraria Integral - Sistema de administracion de clientes"
+        env:
+          DISPLAY: ':99'
+
+      - name: Create .deb package
+        run: |
+          APP_DIR="target/jpackage/${{ env.APP_NAME }}"
+          DEB_DIR="target/deb"
+          DEB_NAME="${{ env.APP_NAME }}_${{ steps.version.outputs.version }}_amd64"
+
+          # Create deb structure
+          mkdir -p "$DEB_DIR/DEBIAN"
+          mkdir -p "$DEB_DIR/opt/dafi-desktop"
+          mkdir -p "$DEB_DIR/usr/share/applications"
+          mkdir -p "$DEB_DIR/usr/share/icons/hicolor/256x256/apps"
+
+          # Copy app files
+          cp -r "$APP_DIR"/* "$DEB_DIR/opt/dafi-desktop/"
+
+          # Copy icon
+          cp packaging/dafi.ico "$DEB_DIR/usr/share/icons/hicolor/256x256/apps/dafi-desktop.png"
+
+          # Create desktop entry
+          cat > "$DEB_DIR/usr/share/applications/dafi-desktop.desktop" << EOF
+          [Desktop Entry]
+          Name=DAFI Desktop
+          Comment=Despacho de Asesoria Funeraria Integral
+          Exec=/opt/dafi-desktop/bin/${{ env.APP_NAME }}
+          Icon=dafi-desktop
+          Terminal=false
+          Type=Application
+          Categories=Office;
+          EOF
+
+          # Create control file
+          cat > "$DEB_DIR/DEBIAN/control" << EOF
+          Package: ${{ env.APP_NAME | lowercase }}
+          Version: ${{ steps.version.outputs.version }}
+          Section: office
+          Priority: optional
+          Architecture: amd64
+          Depends: libgtk-3-0 (>= 3.10), libgl1 (>= 1.4), libglib2.0-0 (>= 2.56), libasound2 (>= 1.1)
+          Maintainer: DAFI <admin@dafi.local>
+          Description: DAFI Desktop - Client Management System
+           Desktop application for managing funeral services clients.
+           Features include secure authentication, encrypted data storage,
+           bulk Excel import, and contract management.
+          EOF
+
+          # Create postinst script (optional)
+          cat > "$DEB_DIR/DEBIAN/postinst" << 'EOF'
+          #!/bin/bash
+          echo "DAFI Desktop installed successfully."
+          echo "Run: /opt/dafi-desktop/bin/DAFI-Desktop"
+          EOF
+          chmod 755 "$DEB_DIR/DEBIAN/postinst"
+
+          # Build .deb
+          dpkg-deb --build "$DEB_DIR" "target/${DEB_NAME}.deb"
+
+          echo "Generated .deb: target/${DEB_NAME}.deb"
+          ls -lh "target/${DEB_NAME}.deb"
+
+      - name: Upload .deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dafi-desktop-deb
+          path: target/*.deb
+          retention-days: 30
+
+  build-exe:
+    name: Build .exe (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Get version
+        id: version
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=1.0.0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Compile and package JAR
+        run: mvn -B clean package -DskipTests
+
+      - name: Create app image with jpackage
+        run: |
+          jpackage ^
+            --input target/classes ^
+            --main-class com.dafi.desktop.infrastructure.DafiLauncher ^
+            --name ${{ env.APP_NAME }} ^
+            --app-version ${{ steps.version.outputs.version }} ^
+            --type app-image ^
+            --dest target/jpackage ^
+            --icon dafi.ico ^
+            --java-options "-Dfile.encoding=UTF-8" ^
+            --java-options "--add-modules javafx.controls,javafx.fxml" ^
+            --java-options "-Xmx512m" ^
+            --vendor "DAFI" ^
+            --description "DAFI Desktop - Client Management System"
+
+      - name: Create .exe installer
+        run: |
+          jpackage ^
+            --input target/classes ^
+            --main-class com.dafi.desktop.infrastructure.DafiLauncher ^
+            --name ${{ env.APP_NAME }} ^
+            --app-version ${{ steps.version.outputs.version }} ^
+            --type exe ^
+            --dest target/installer ^
+            --icon dafi.ico ^
+            --java-options "-Dfile.encoding=UTF-8" ^
+            --java-options "--add-modules javafx.controls,javafx.fxml" ^
+            --java-options "-Xmx512m" ^
+            --vendor "DAFI" ^
+            --description "DAFI Desktop - Client Management System" ^
+            --win-menu ^
+            --win-menu-group "DAFI" ^
+            --win-shortcut ^
+            --win-desktop ^
+            --app-content "README.md,INSTRUCCIONES-WINDOWS.txt,packaging/check-deps.ps1,packaging/DAFI-Desktop.bat"
+
+      - name: Create portable .exe with dependency check
+        shell: bash
+        run: |
+          # Create portable directory
+          PORTABLE_DIR="target/portable"
+          mkdir -p "$PORTABLE_DIR"
+          
+          # Copy app files
+          cp -r target/jpackage/${{ env.APP_NAME }}/* "$PORTABLE_DIR/"
+          
+          # Copy dependency scripts
+          mkdir -p "$PORTABLE_DIR/scripts"
+          cp packaging/check-deps.ps1 "$PORTABLE_DIR/scripts/"
+          cp packaging/DAFI-Desktop.bat "$PORTABLE_DIR/"
+          
+          # Create launcher that checks deps first
+          cat > "$PORTABLE_DIR/Launch-DAFI.bat" << 'EOF'
+          @echo off
+          echo Checking dependencies...
+          powershell -ExecutionPolicy Bypass -File "%~dp0scripts\check-deps.ps1" -Silent
+          if %ERRORLEVEL% neq 0 (
+              echo.
+              echo Some dependencies may not be installed.
+              echo The application may not start without Java 17+.
+              echo.
+              echo Press any key to continue anyway...
+              pause >nul
+          )
+          echo.
+          echo Starting DAFI Desktop...
+          call "%~dp0DAFI-Desktop.bat"
+          EOF
+          
+          # Create zip for portable version
+          cd target
+          VERSION=${{ steps.version.outputs.version }}
+          zip -r "DAFI-Desktop-${VERSION}-windows-portable.zip" portable/
+          ls -lh "DAFI-Desktop-${VERSION}-windows-portable.zip"
+          cd ..
+
+      - name: Rename .exe
+        shell: bash
+        run: |
+          EXE=$(find target/installer -name "*.exe" | head -1)
+          VERSION=${{ steps.version.outputs.version }}
+          mv "$EXE" "target/DAFI-Desktop-${VERSION}-windows.exe"
+          ls -lh target/*.exe
+
+      - name: Upload .exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dafi-desktop-exe
+          path: |
+            target/*.exe
+            target/*.zip
+          retention-days: 30
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [build-deb, build-exe]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=1.0.0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download .deb artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dafi-desktop-deb
+          path: artifacts/
+
+      - name: Download .exe artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dafi-desktop-exe
+          path: artifacts/
+
+      - name: List artifacts
+        run: |
+          echo "Artifacts to release:"
+          find artifacts/ -type f
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          CHANGES=$(git log --oneline -10 --no-merges | sed 's/^/- /')
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "DAFI Desktop v${{ steps.version.outputs.version }}"
+          tag_name: "v${{ steps.version.outputs.version }}"
+          body: |
+            ## DAFI Desktop v${{ steps.version.outputs.version }}
+
+            **Despacho de Asesoria Funeraria Integral** - Client Management System
+
+            ### What's New
+            ${{ steps.changelog.outputs.changelog }}
+
+            ### Downloads
+
+            | Platform | File | Description |
+            |----------|------|-------------|
+            | Linux | `*.deb` | Debian/Ubuntu package |
+            | Windows | `*.exe` | Windows installer with dependency check |
+            | Windows | `*-portable.zip` | Portable version (no install required) |
+
+            ### Installation
+
+            **Linux (Ubuntu/Debian):**
+            ```bash
+            sudo dpkg -i DAFI-Desktop_*.deb
+            /opt/dafi-desktop/bin/DAFI-Desktop
+            ```
+
+            **Windows Installer:**
+            Double-click the .exe installer. It will automatically check and install Java 17+ if not present.
+
+            **Windows Portable:**
+            Extract the .zip and run `Launch-DAFI.bat`. It will check dependencies on first run.
+
+            ### Security
+            - Passwords: Argon2id
+            - Data: AES-256-GCM
+            - Key storage: OS Keyring / file fallback
+
+            ### System Requirements
+            - Java 17+ (bundled in installer)
+            - 512 MB RAM minimum
+            - 200 MB disk space
+          files: |
+            artifacts/*.deb
+            artifacts/*.exe
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Release Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          find artifacts/ -type f -exec echo "- {}" \; >> $GITHUB_STEP_SUMMARY

@@ -4,7 +4,6 @@ import com.dafi.desktop.infrastructure.I18n;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
@@ -17,7 +16,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 /**
- * Controlador de la ventana principal con barra lateral.
+ * Controller for the main window with the sidebar navigation.
+ * Loads each section view into the content area and injects its
+ * dependencies from {@link SceneFactory}.
  */
 public class MainController {
 
@@ -33,7 +34,22 @@ public class MainController {
     private Label clientsLabel;
 
     @FXML
+    private HBox contractTypesButton;
+
+    @FXML
+    private Label contractTypesLabel;
+
+    @FXML
+    private HBox paymentMethodsButton;
+
+    @FXML
+    private Label paymentMethodsLabel;
+
+    @FXML
     private Label appTitle;
+
+    @FXML
+    private Label appBrand;
 
     @FXML
     private Label appSubtitle;
@@ -46,48 +62,71 @@ public class MainController {
     private HBox activeNavItem;
 
     /**
-     * Inicializa el controlador después de que el FXML se ha cargado.
+     * Applies i18n texts, highlights the default section and shows the clients view.
      */
     @FXML
     public void initialize() {
         I18n i18n = I18n.getInstance();
         appTitle.setText(i18n.get("app.title"));
+        appBrand.setText(i18n.get("app.brand"));
         appSubtitle.setText(i18n.get("app.subtitle"));
         versionLabel.setText(i18n.get("app.version"));
 
         clientsLabel.setText(i18n.get("sidebar.clients"));
+        contractTypesLabel.setText(i18n.get("sidebar.contractTypes"));
+        paymentMethodsLabel.setText(i18n.get("sidebar.paymentMethods"));
 
         clientsButton.setCursor(Cursor.HAND);
+        contractTypesButton.setCursor(Cursor.HAND);
+        paymentMethodsButton.setCursor(Cursor.HAND);
 
         loadClientsView();
         setActiveNav(clientsButton);
     }
 
     /**
-     * Establece el caso de uso de autenticación.
+     * Sets the authentication use case passed down to the section views.
      *
-     * @param authenticateUseCase caso de uso
+     * @param authenticateUseCase authentication use case
      */
     public void setAuthenticateUseCase(com.dafi.desktop.application.auth.AuthenticateUserUseCase authenticateUseCase) {
         this.authenticateUseCase = authenticateUseCase;
     }
 
     /**
-     * Establece el stage principal.
+     * Sets the primary stage hosting the main scene.
      *
-     * @param primaryStage stage principal
+     * @param primaryStage application primary stage
      */
     public void setPrimaryStage(Stage primaryStage) {
         this.primaryStage = primaryStage;
     }
 
     /**
-     * Maneja el clic en el botón de Clientes.
+     * Handles the click on the Clients sidebar button.
      */
     @FXML
     private void handleClientsClick(MouseEvent event) {
         loadClientsView();
         setActiveNav(clientsButton);
+    }
+
+    /**
+     * Handles the click on the Contract Types sidebar button.
+     */
+    @FXML
+    private void handleContractTypesClick(MouseEvent event) {
+        loadContractTypesView();
+        setActiveNav(contractTypesButton);
+    }
+
+    /**
+     * Handles the click on the Payment Types sidebar button.
+     */
+    @FXML
+    private void handlePaymentMethodsClick(MouseEvent event) {
+        loadPaymentMethodsView();
+        setActiveNav(paymentMethodsButton);
     }
 
     private void loadClientsView() {
@@ -98,16 +137,65 @@ public class MainController {
             ClientsController controller = loader.getController();
             controller.setDependencies(
                     SceneFactory.getClientsUseCase(),
-                    SceneFactory.getClientRepositoryPort()
+                    SceneFactory.getClientRepositoryPort(),
+                    SceneFactory.getBulkClientImportUseCase(),
+                    SceneFactory.getContractTypesUseCase(),
+                    SceneFactory.getPaymentMethodsUseCase(),
+                    SceneFactory.getExportEncryptionKeyUseCase(),
+                    SceneFactory.getImportEncryptionKeyUseCase()
             );
 
-            contentArea.getChildren().clear();
-            contentArea.getChildren().add(clientsView);
+            displayView(clientsView);
         } catch (IOException e) {
-            log.error("Error al cargar la vista de clientes", e);
-            contentArea.getChildren().clear();
-            contentArea.getChildren().add(new Label("Error al cargar la vista de clientes: " + e.getMessage()));
+            showViewLoadError("Error al cargar la vista de clientes", e);
         }
+    }
+
+    private void loadContractTypesView() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/ContractTypeCatalogView.fxml"));
+            Parent view = loader.load();
+
+            ContractTypeCatalogController controller = loader.getController();
+            controller.setDependencies(
+                    SceneFactory.getContractTypesUseCase(),
+                    SceneFactory.getContractTypeCatalogRepositoryPort(),
+                    SceneFactory.getExportEncryptionKeyUseCase(),
+                    SceneFactory.getImportEncryptionKeyUseCase()
+            );
+
+            displayView(view);
+        } catch (IOException e) {
+            showViewLoadError("Error al cargar la vista de tipos de contrato", e);
+        }
+    }
+
+    private void loadPaymentMethodsView() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/PaymentMethodCatalogView.fxml"));
+            Parent view = loader.load();
+
+            PaymentMethodCatalogController controller = loader.getController();
+            controller.setDependencies(
+                    SceneFactory.getPaymentMethodsUseCase(),
+                    SceneFactory.getPaymentMethodCatalogRepositoryPort()
+            );
+
+            displayView(view);
+        } catch (IOException e) {
+            showViewLoadError("Error al cargar la vista de tipos de pago", e);
+        }
+    }
+
+    private void displayView(Parent view) {
+        contentArea.getChildren().clear();
+        contentArea.getChildren().add(view);
+    }
+
+    private void showViewLoadError(String errorContext, IOException e) {
+        log.error(errorContext, e);
+        contentArea.getChildren().clear();
+        contentArea.getChildren().add(new Label("Error al cargar la vista: " + e.getMessage()));
     }
 
     private void setActiveNav(HBox navItem) {

@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.MissingResourceException;
 
 /**
- * Servicio para cargar etiquetas de internacionalización desde JSON.
+ * Service that loads internationalization labels from JSON resources.
  */
 public class I18n {
 
@@ -21,9 +21,9 @@ public class I18n {
     }
 
     /**
-     * Obtiene la instancia única del servicio I18n.
+     * Returns the singleton instance of the I18n service.
      *
-     * @return instancia de I18n
+     * @return the shared I18n instance
      */
     public static synchronized I18n getInstance() {
         if (instance == null) {
@@ -33,9 +33,10 @@ public class I18n {
     }
 
     /**
-     * Carga un idioma desde el recurso JSON.
+     * Loads a language from its JSON resource.
      *
-     * @param language código del idioma (ej: "es", "en")
+     * @param language language code (e.g. "es", "en")
+     * @throws RuntimeException if the resource cannot be read or parsed
      */
     public void loadLanguage(String language) {
         String path = "/i18n/" + language + ".json";
@@ -49,11 +50,11 @@ public class I18n {
     }
 
     /**
-     * Obtiene una etiqueta por su clave.
+     * Returns the label for the given key.
      *
-     * @param key clave de la etiqueta (ej: "app.title")
-     * @return texto de la etiqueta
-     * @throws MissingResourceException si la clave no existe
+     * @param key label key (e.g. "app.title")
+     * @return the label text
+     * @throws MissingResourceException if the key does not exist
      */
     public String get(String key) {
         if (labels == null || !labels.has(key)) {
@@ -67,11 +68,11 @@ public class I18n {
     }
 
     /**
-     * Obtiene una etiqueta con un valor por defecto si no existe.
+     * Returns the label for the given key, or a default value when missing.
      *
-     * @param key          clave de la etiqueta
-     * @param defaultValue valor por defecto
-     * @return texto de la etiqueta o el valor por defecto
+     * @param key          label key
+     * @param defaultValue value returned when the key does not exist
+     * @return the label text or the default value
      */
     public String getOrDefault(String key, String defaultValue) {
         try {

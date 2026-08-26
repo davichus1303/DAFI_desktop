@@ -6,6 +6,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Read-only view model projecting a {@link Client} onto the clients table rows,
+ * including formatted contract dates.
+ */
 public class ClientViewModel {
 
     private final String id;
@@ -23,15 +27,21 @@ public class ClientViewModel {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+    /**
+     * Creates a view model from a domain client, null-safe for catalog names.
+     *
+     * @param client domain client to project
+     * @return a row model for the clients table
+     */
     public static ClientViewModel fromClient(Client client) {
         return new ClientViewModel(
                 client.getId(),
                 client.getContractFolio(),
                 client.getFullName(),
-                client.getContractType() != null ? client.getContractType().getDisplayName() : "",
+                client.getContractType() != null ? client.getContractType() : "",
                 client.getPhone(),
                 client.getNeighborhood(),
-                client.getPaymentMethod() != null ? client.getPaymentMethod().getDisplayName() : "",
+                client.getPaymentMethod() != null ? client.getPaymentMethod() : "",
                 client.getContractDate(),
                 client.getContractEndDate(),
                 client.getTotalPayments(),

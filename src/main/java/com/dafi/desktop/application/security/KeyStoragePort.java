@@ -1,29 +1,29 @@
 package com.dafi.desktop.application.security;
 
 /**
- * Puerto de salida para el almacenamiento seguro de claves cifrado.
- * Permite abstraer el mecanismo de almacenamiento (keyring del SO, archivo seguro, etc.)
+ * Output port for secure encryption key storage.
+ * Abstracts the underlying mechanism (OS keyring, secure file, etc.).
  */
 public interface KeyStoragePort {
 
     /**
-     * Obtiene la clave de cifrado almacenada.
+     * Retrieves the stored encryption key.
      *
-     * @return clave en formato Base64 o null si no existe
+     * @return Base64-encoded key, or {@code null} if none exists
      */
     String getEncryptionKey();
 
     /**
-     * Almacena la clave de cifrado.
+     * Persists the encryption key.
      *
-     * @param key clave en formato Base64
+     * @param key Base64-encoded key
      */
     void storeEncryptionKey(String key);
 
     /**
-     * Verifica si existe una clave de cifrado almacenada.
+     * Checks whether an encryption key is already stored.
      *
-     * @return true si existe una clave
+     * @return {@code true} if a key exists
      */
     boolean hasStoredKey();
 }

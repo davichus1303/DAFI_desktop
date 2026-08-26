@@ -20,6 +20,7 @@
                 </padding>
 
                 <Label fx:id="appTitle" text="DAFI" styleClass="app-title"/>
+                <Label fx:id="appBrand" text="Desktop" styleClass="app-brand"/>
                 <Label fx:id="appSubtitle" styleClass="app-subtitle"/>
             </VBox>
 
@@ -38,6 +39,26 @@
                     </padding>
                     <Label text="&#x1F465;" styleClass="nav-icon"/>
                     <Label fx:id="clientsLabel" styleClass="nav-label"/>
+                </HBox>
+
+                <HBox fx:id="contractTypesButton" onMouseClicked="#handleContractTypesClick"
+                      alignment="CENTER_LEFT" styleClass="nav-item"
+                      prefWidth="220" prefHeight="44">
+                    <padding>
+                        <Insets top="0" right="20" bottom="0" left="24"/>
+                    </padding>
+                    <Label text="&#x1F4CB;" styleClass="nav-icon"/>
+                    <Label fx:id="contractTypesLabel" styleClass="nav-label"/>
+                </HBox>
+
+                <HBox fx:id="paymentMethodsButton" onMouseClicked="#handlePaymentMethodsClick"
+                      alignment="CENTER_LEFT" styleClass="nav-item"
+                      prefWidth="220" prefHeight="44">
+                    <padding>
+                        <Insets top="0" right="20" bottom="0" left="24"/>
+                    </padding>
+                    <Label text="&#x1F4B3;" styleClass="nav-icon"/>
+                    <Label fx:id="paymentMethodsLabel" styleClass="nav-label"/>
                 </HBox>
             </VBox>
 

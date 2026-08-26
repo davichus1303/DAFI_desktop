@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.dafi.desktop.adapters.inbound.fx.PaymentMethodCatalogController"
+      VBox.vgrow="ALWAYS">
+
+    <VBox spacing="5" styleClass="section-header">
+        <Label fx:id="titleLabel" styleClass="section-title"/>
+        <Label fx:id="subtitleLabel" styleClass="section-subtitle"/>
+    </VBox>
+
+    <HBox spacing="15" alignment="CENTER_LEFT" VBox.vgrow="NEVER">
+        <padding>
+            <Insets top="0" right="0" bottom="20" left="0"/>
+        </padding>
+
+        <Button fx:id="newTypeButton" onAction="#handleNewType" styleClass="add-button"/>
+
+        <Button fx:id="backButton" onAction="#handleBack" styleClass="add-button"
+                visible="false" managed="false"/>
+
+        <Region HBox.hgrow="ALWAYS"/>
+
+        <Label fx:id="statusLabel" styleClass="status-label"/>
+    </HBox>
+
+    <StackPane VBox.vgrow="ALWAYS">
+
+        <!-- Tabla -->
+        <VBox fx:id="tableContainer" spacing="10">
+            <HBox alignment="CENTER_LEFT" spacing="10" VBox.vgrow="NEVER">
+                <TextField fx:id="searchField" styleClass="search-field"
+                           promptText="" prefWidth="350" prefHeight="36"/>
+                <Label fx:id="searchResultsLabel" styleClass="status-label"/>
+            </HBox>
+
+            <TableView fx:id="entriesTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="nameColumn" prefWidth="250"/>
+                    <TableColumn fx:id="descriptionColumn" prefWidth="500"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+        <!-- Formulario -->
+        <VBox fx:id="formContainer" visible="false" managed="false"
+              styleClass="form-container" alignment="CENTER"
+              VBox.vgrow="ALWAYS">
+            <padding>
+                <Insets top="0" right="10" bottom="10" left="10"/>
+            </padding>
+
+            <VBox spacing="20" alignment="CENTER" maxWidth="500" VBox.vgrow="ALWAYS">
+                <padding>
+                    <Insets top="30" right="30" bottom="30" left="30"/>
+                </padding>
+
+                <Label fx:id="formTitleLabel" styleClass="section-title"/>
+
+                <VBox spacing="5">
+                    <Label fx:id="labelName" styleClass="form-label"/>
+                    <TextField fx:id="nameField" styleClass="form-text-field"
+                               promptText="" prefHeight="40"/>
+                    <Label fx:id="nameErrorLabel" styleClass="error-label" visible="false"/>
+                </VBox>
+
+                <VBox spacing="5">
+                    <Label fx:id="labelDescription" styleClass="form-label"/>
+                    <TextArea fx:id="descriptionField" styleClass="form-text-field"
+                              promptText="" prefHeight="120" wrapText="true"/>
+                </VBox>
+
+                <Label fx:id="formErrorLabel" styleClass="error-label" visible="false"
+                       wrapText="true" maxWidth="440"/>
+
+                <Label fx:id="formSuccessLabel" styleClass="success-label" visible="false"
+                       wrapText="true" maxWidth="440"/>
+
+                <Button fx:id="saveButton" onAction="#handleSave"
+                        styleClass="save-button" disable="true"
+                        maxWidth="Infinity" alignment="CENTER"/>
+            </VBox>
+        </VBox>
+
+    </StackPane>
+
+    <Label fx:id="loadingLabel" visible="false" styleClass="loading-label"/>
+</VBox>
