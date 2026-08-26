@@ -38,45 +38,45 @@ Section "DAFI Desktop" SecMain
     SectionIn RO
 
     ; --- Check Java via simple file check ---
-    DetailPrint "Verificando Java 17+..."
-    IfFileExists "$PROGRAMFILES\Eclipse Adoptium\jdk-17*\bin\java.exe" 0 +3
+    DetailPrint "Verificando Java 21+..."
+    IfFileExists "$PROGRAMFILES\Eclipse Adoptium\jdk-21*\bin\java.exe" 0 +3
         DetailPrint "Java encontrado (Adoptium)"
         StrCpy $JavaFound "1"
 
     ${If} $JavaFound == "0"
-        IfFileExists "$PROGRAMFILES\Java\jdk-17*\bin\java.exe" 0 +3
+        IfFileExists "$PROGRAMFILES\Java\jdk-21*\bin\java.exe" 0 +3
             DetailPrint "Java encontrado (Oracle)"
             StrCpy $JavaFound "1"
     ${EndIf}
 
     ${If} $JavaFound == "0"
-        IfFileExists "$PROGRAMFILES\Microsoft\jdk-17*\bin\java.exe" 0 +3
+        IfFileExists "$PROGRAMFILES\Microsoft\jdk-21*\bin\java.exe" 0 +3
             DetailPrint "Java encontrado (Microsoft)"
             StrCpy $JavaFound "1"
     ${EndIf}
 
     ${If} $JavaFound == "0"
-        MessageBox MB_YESNO "Java 17+ no encontrado.$\r$\n$\r$\nDesea descargar e instalar Java 17 automaticamente?$\r$\n(Si elige No, la app puede no funcionar)" IDYES DownloadJava IDNO SkipJava
+        MessageBox MB_YESNO "Java 21+ no encontrado.$\r$\n$\r$\nDesea descargar e instalar Java 21 automaticamente?$\r$\n(Si elige No, la app puede no funcionar)" IDYES DownloadJava IDNO SkipJava
     ${EndIf}
     Goto InstallApp
 
     DownloadJava:
-        DetailPrint "Descargando Java 17..."
+        DetailPrint "Descargando Java 21..."
         CreateDirectory "$TEMP\dafi-java"
-        nsExec::ExecToStack 'cmd /c curl -L -o "$TEMP\dafi-java\jdk17.msi" "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.13%2B11/OpenJDK17U-jdk_x64_windows_hotspot_17.0.13_11.msi"'
+        nsExec::ExecToStack 'cmd /c curl -L -o "$TEMP\dafi-java\jdk21.msi" "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.5%2B11/OpenJDK21U-jdk_x64_windows_hotspot_21.0.5_11.msi"'
         Pop $0
         ${If} $0 != "0"
-            MessageBox MB_OK "No se pudo descargar Java 17.$\r$\nInstale manualmente desde https://adoptium.net/"
+            MessageBox MB_OK "No se pudo descargar Java 21.$\r$\nInstale manualmente desde https://adoptium.net/"
             Goto SkipJava
         ${EndIf}
-        DetailPrint "Instalando Java 17..."
-        nsExec::ExecToStack 'cmd /c msiexec /i "$TEMP\dafi-java\jdk17.msi" ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome /quiet /norestart'
+        DetailPrint "Instalando Java 21..."
+        nsExec::ExecToStack 'cmd /c msiexec /i "$TEMP\dafi-java\jdk21.msi" ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome /quiet /norestart'
         Pop $0
         RMDir /r "$TEMP\dafi-java"
         ${If} $0 == "0"
-            DetailPrint "Java 17 instalado correctamente"
+            DetailPrint "Java 21 instalado correctamente"
         ${ElseIf} $0 == "3010"
-            DetailPrint "Java 17 instalado (puede requerir reinicio)"
+            DetailPrint "Java 21 instalado (puede requerir reinicio)"
         ${Else}
             MessageBox MB_OK "Error al instalar Java. Continuando sin Java..."
         ${EndIf}
@@ -90,17 +90,10 @@ Section "DAFI Desktop" SecMain
     DetailPrint "Instalando DAFI Desktop..."
     File /r "..\target\jpackage\DAFI-Desktop\*.*"
 
-    ; --- Create launcher ---
-    FileOpen $0 "$INSTDIR\Launch-DAFI.bat" w
-    FileWrite $0 '@echo off$\r$\n'
-    FileWrite $0 'cd /d "%~dp0"$\r$\n'
-    FileWrite $0 'start "" "%~dp0DAFI-Desktop.bat"$\r$\n'
-    FileClose $0
-
-    ; --- Shortcuts ---
-    CreateShortCut "$DESKTOP\DAFI Desktop.lnk" "$INSTDIR\Launch-DAFI.bat" "" "$INSTDIR\app\DAFI-Desktop.ico"
+    ; --- Shortcuts point directly to jpackage launcher (no wrapper needed) ---
+    CreateShortCut "$DESKTOP\DAFI Desktop.lnk" "$INSTDIR\DAFI-Desktop.exe" "" "$INSTDIR\app\DAFI-Desktop.ico"
     CreateDirectory "$SMPROGRAMS\DAFI Desktop"
-    CreateShortCut "$SMPROGRAMS\DAFI Desktop\DAFI Desktop.lnk" "$INSTDIR\Launch-DAFI.bat" "" "$INSTDIR\app\DAFI-Desktop.ico"
+    CreateShortCut "$SMPROGRAMS\DAFI Desktop\DAFI Desktop.lnk" "$INSTDIR\DAFI-Desktop.exe" "" "$INSTDIR\app\DAFI-Desktop.ico"
     CreateShortCut "$SMPROGRAMS\DAFI Desktop\Desinstalar.lnk" "$INSTDIR\uninstall.exe"
 
     ; --- Registry ---
