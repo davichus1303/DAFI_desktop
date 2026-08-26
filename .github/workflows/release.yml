@@ -240,43 +240,36 @@ jobs:
           --win-menu-group "DAFI"
           --win-shortcut
 
-      - name: Create portable .exe with dependency check
-        shell: bash
+      - name: Create portable package
+        shell: pwsh
         run: |
-          # Create portable directory
-          PORTABLE_DIR="target/portable"
-          mkdir -p "$PORTABLE_DIR"
+          $portableDir = "target/portable"
+          New-Item -ItemType Directory -Path "$portableDir/scripts" -Force | Out-Null
           
-          # Copy app files
-          cp -r target/jpackage/${{ env.APP_NAME }}/* "$PORTABLE_DIR/"
+          Copy-Item -Path "target/jpackage/${{ env.APP_NAME }}/*" -Destination "$portableDir/" -Recurse -Force
+          Copy-Item -Path "packaging/check-deps.ps1" -Destination "$portableDir/scripts/"
+          Copy-Item -Path "packaging/DAFI-Desktop.bat" -Destination "$portableDir/"
           
-          # Copy dependency scripts
-          mkdir -p "$PORTABLE_DIR/scripts"
-          cp packaging/check-deps.ps1 "$PORTABLE_DIR/scripts/"
-          cp packaging/DAFI-Desktop.bat "$PORTABLE_DIR/"
-
-          # Create launcher that checks deps first
-          echo "@echo off" > "$PORTABLE_DIR/Launch-DAFI.bat"
-          echo "echo Checking dependencies..." >> "$PORTABLE_DIR/Launch-DAFI.bat"
-          echo "powershell -ExecutionPolicy Bypass -File \"%%~dp0scripts\\check-deps.ps1\" -Silent" >> "$PORTABLE_DIR/Launch-DAFI.bat"
-          echo "if %%ERRORLEVEL%% neq 0 (" >> "$PORTABLE_DIR/Launch-DAFI.bat"
-          echo "    echo." >> "$PORTABLE_DIR/Launch-DAFI.bat"
-          echo "    echo Some dependencies may not be installed." >> "$PORTABLE_DIR/Launch-DAFI.bat"
-          echo "    echo The application may not start without Java 17+." >> "$PORTABLE_DIR/Launch-DAFI.bat"
-          echo "    echo." >> "$PORTABLE_DIR/Launch-DAFI.bat"
-          echo "    echo Press any key to continue anyway..." >> "$PORTABLE_DIR/Launch-DAFI.bat"
-          echo "    pause >nul" >> "$PORTABLE_DIR/Launch-DAFI.bat"
-          echo ")" >> "$PORTABLE_DIR/Launch-DAFI.bat"
-          echo "echo." >> "$PORTABLE_DIR/Launch-DAFI.bat"
-          echo "echo Starting DAFI Desktop..." >> "$PORTABLE_DIR/Launch-DAFI.bat"
-          echo "call \"%%~dp0DAFI-Desktop.bat\"" >> "$PORTABLE_DIR/Launch-DAFI.bat"
+          $launchBat = @"
+          @echo off
+          echo Checking dependencies...
+          powershell -ExecutionPolicy Bypass -File "%~dp0scripts\check-deps.ps1" -Silent
+          if %ERRORLEVEL% neq 0 (
+              echo.
+              echo Some dependencies may not be installed.
+              echo The application may not start without Java 17+.
+              echo.
+              echo Press any key to continue anyway...
+              pause >nul
+          )
+          echo.
+          echo Starting DAFI Desktop...
+          call "%~dp0DAFI-Desktop.bat"
+          "@
+          Set-Content -Path "$portableDir/Launch-DAFI.bat" -Value $launchBat
           
-          # Create zip for portable version
-          cd target
-          VERSION=${{ steps.version.outputs.version }}
-          zip -r "DAFI-Desktop-${VERSION}-windows-portable.zip" portable/
-          ls -lh "DAFI-Desktop-${VERSION}-windows-portable.zip"
-          cd ..
+          Compress-Archive -Path "$portableDir/*" -DestinationPath "target/DAFI-Desktop-${{ steps.version.outputs.version }}-windows-portable.zip" -Force
+          Get-ChildItem "target/*.zip"
 
       - name: Rename .exe
         shell: bash
