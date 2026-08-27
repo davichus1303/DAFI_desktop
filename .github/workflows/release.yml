@@ -103,7 +103,7 @@ jobs:
             --app-version ${{ steps.version.outputs.version }} \
             --type app-image \
             --dest target/jpackage \
-            --icon packaging/dafi.ico \
+            --icon src/main/resources/icons/icon-256.png \
             --java-options "-Dfile.encoding=UTF-8" \
             --java-options "-Xmx512m" \
             --vendor "DAFI" \
@@ -127,7 +127,7 @@ jobs:
           cp -r "$APP_DIR"/* "$DEB_DIR/opt/dafi-desktop/"
 
           # Copy icon
-          cp packaging/dafi.ico "$DEB_DIR/usr/share/icons/hicolor/256x256/apps/dafi-desktop.png"
+          cp src/main/resources/icons/icon-256.png "$DEB_DIR/usr/share/icons/hicolor/256x256/apps/dafi-desktop.png"
 
           # Create desktop entry
           echo "[Desktop Entry]" > "$DEB_DIR/usr/share/applications/dafi-desktop.desktop"
@@ -223,6 +223,12 @@ jobs:
         run: |
           choco install nsis -y --no-progress
           echo "C:\Program Files (x86)\NSIS" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Copy icon into app image (shortcut reference)
+        shell: pwsh
+        run: |
+          Copy-Item -Path "packaging/dafi.ico" -Destination "target/jpackage/${{ env.APP_NAME }}/app/DAFI-Desktop.ico" -Force
+          Get-ChildItem "target/jpackage/${{ env.APP_NAME }}/app/" | Select-Object Name
 
       - name: Create NSIS installer
         shell: cmd
