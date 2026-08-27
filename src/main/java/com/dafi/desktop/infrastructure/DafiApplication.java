@@ -2,6 +2,7 @@ package com.dafi.desktop.infrastructure;
 
 import com.dafi.desktop.adapters.inbound.fx.SceneFactory;
 import com.dafi.desktop.application.auth.AuthenticateUserUseCase;
+import com.dafi.desktop.shared.utils.BaseDirectory;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonType;
@@ -26,8 +27,8 @@ import java.util.stream.Stream;
  */
 public class DafiApplication extends Application {
 
-    private static final Path CONFIG_DIR = Path.of(System.getProperty("user.home"), ".dafi", "config");
-    private static final Path DATA_DIR = Path.of(System.getProperty("user.home"), ".dafi", "data");
+    private static final Path CONFIG_DIR = BaseDirectory.configDir();
+    private static final Path DATA_DIR = BaseDirectory.dataDir();
 
     /**
      * Initializes internationalization and scene infrastructure, runs
