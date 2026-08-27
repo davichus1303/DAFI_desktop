@@ -105,7 +105,6 @@ jobs:
             --dest target/jpackage \
             --icon packaging/dafi.ico \
             --java-options "-Dfile.encoding=UTF-8" \
-            --java-options "--add-modules javafx.controls,javafx.fxml" \
             --java-options "-Xmx512m" \
             --vendor "DAFI" \
             --description "Despacho de Asesoria Funeraria Integral - Sistema de administracion de clientes"
@@ -215,7 +214,6 @@ jobs:
           --dest target/jpackage
           --icon packaging/dafi.ico
           --java-options "-Dfile.encoding=UTF-8"
-          --java-options "--add-modules javafx.controls,javafx.fxml"
           --java-options "-Xmx512m"
           --vendor "DAFI"
           --description "DAFI Desktop - Client Management System"
