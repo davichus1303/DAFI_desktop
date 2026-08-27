@@ -58,12 +58,20 @@ public final class BulkImportReportWriter {
     }
 
     /**
-     * Resolves the documents directory of the current user, accepting both
-     * the Spanish ({@code Documentos}) and English ({@code Documents})
-     * naming; falls back to creating {@code Documents} and finally to the
-     * home directory when nothing else works.
+     * Resolves the documents directory of the current user. Prefers the
+     * {@code XDG_DOCUMENTS_DIR} entry from the xdg-user-dirs configuration
+     * ({@code ~/.config/user-dirs.dirs}), then accepts both the Spanish
+     * ({@code Documentos}) and English ({@code Documents}) naming, and finally
+     * falls back to creating {@code Documents} under the home directory.
      */
     private static Path resolveDocumentsDirectory() throws IOException {
+        String configured = xdgDocumentsDir();
+        if (configured != null) {
+            Path xdgPath = Path.of(configured.replace("$HOME", System.getProperty("user.home")));
+            if (Files.isDirectory(xdgPath)) {
+                return xdgPath;
+            }
+        }
         String userHome = System.getProperty("user.home");
         for (String folderName : new String[]{"Documentos", "Documents"}) {
             Path candidate = Path.of(userHome, folderName);
@@ -74,6 +82,25 @@ public final class BulkImportReportWriter {
         Path created = Path.of(userHome, "Documents");
         Files.createDirectories(created);
         return created;
+    }
+
+    /**
+     * Reads the {@code XDG_DOCUMENTS_DIR} value from the xdg-user-dirs
+     * configuration file, or returns {@code null} when it is not present.
+     */
+    private static String xdgDocumentsDir() throws IOException {
+        Path userDirs = Path.of(System.getProperty("user.home"), ".config", "user-dirs.dirs");
+        if (!Files.exists(userDirs)) {
+            return null;
+        }
+        for (String line : Files.readAllLines(userDirs)) {
+            if (line.startsWith("XDG_DOCUMENTS_DIR=")) {
+                int start = line.indexOf('"');
+                int end = line.lastIndexOf('"');
+                return start >= 0 && end > start ? line.substring(start + 1, end) : null;
+            }
+        }
+        return null;
     }
 
     private static Path resolveReportDirectory() throws IOException {
