@@ -11,7 +11,7 @@ Desktop application for managing clients of a funeral services firm. Allows mana
 - Secure authentication with Argon2id
 - Data encryption with AES-256-GCM
 - Exportable/importable encryption key across machines
-- Local persistence in encrypted JSON at `~/.dafi/`
+- Local persistence in encrypted JSON under XDG dirs (`~/.config/dafi/`, `~/.local/share/dafi/`)
 - Graphical interface with JavaFX 21
 - Bulk client import from Excel (.xlsx/.xls) with validation and error reporting
 - Real-time search with debounce
@@ -128,22 +128,23 @@ On first launch, the application prompts for:
 1. Creating an admin user
 2. Setting a password (stored with Argon2id)
 
-Data is automatically encrypted with AES-256-GCM and stored in `~/.dafi/`.
+Data is automatically encrypted with AES-256-GCM and stored under the user XDG directories (config in `~/.config/dafi/`, data in `~/.local/share/dafi/`). Installations upgraded from previous versions keep their legacy `~/.dafi/data` files, which are migrated automatically on first launch.
 
 ## Data
 
-Directory `~/.dafi/`:
+Directories (XDG Base Directory / Flatpak-friendly layout):
 
 ```
-~/.dafi/
-├── config/
-│   ├── credentials.json    # User credentials (Argon2 hash)
-│   └── encryption.key      # Encryption key (file backup)
-└── data/
-    ├── clients.json        # Encrypted clients
-    ├── contract-types.json # Encrypted contract types
-    └── payment-methods.json # Encrypted payment methods
+~/.config/dafi/                 # Configuration (XDG_CONFIG_HOME)
+├── credentials.json            # User credentials (Argon2 hash)
+└── encryption.key              # Encryption key (file backup)
+~/.local/share/dafi/            # Data (XDG_DATA_HOME)
+    ├── clients.json            # Encrypted clients
+    ├── contract-types.json     # Encrypted contract types
+    └── payment-methods.json    # Encrypted payment methods
 ```
+
+Legacy `~/.dafi/` (pre-XDG) content is preserved: config is still used as-is and data is migrated once to the XDG location, leaving the original untouched as a backup.
 
 **IMPORTANT**: These files contain sensitive data and should not be shared.
 
@@ -203,6 +204,29 @@ construir-instalador.bat
 ```
 
 Generates a Windows installer at `packaging/target/jpackage/`.
+
+## Flatpak / Flathub packaging
+
+Canonical application ID: `io.github.davichus1303.DafiDesktop`
+
+This ID is required by Flathub (reverse-DNS recommended for projects without a
+dedicated domain) and is the only identifier used by the Flatpak manifest,
+desktop file and icon. It is **not** the Java package name.
+
+| Artifact | Location |
+|----------|----------|
+| Desktop file | `packaging/io.github.davichus1303.DafiDesktop.desktop` |
+| Icon (256 px PNG) | `src/main/resources/icons/icon-256.png` → installed as `io.github.davichus1303.DafiDesktop.png` |
+| Executable | `bin/DAFI-Desktop` (jpackage launcher, relative to `/app` in the sandbox) |
+
+Design notes:
+
+- The `.desktop` lands at `/app/share/applications/io.github.davichus1303.DafiDesktop.desktop`
+  inside the sandbox; Flathub validates it against the appstream spec.
+- `StartupWMClass=dafi` matches the window class reported by the JavaFX runtime;
+  keep it in sync if the launcher naming changes.
+- The manifest (Phase 3) must not export `--share=network`; the app reads/writes
+  only under XDG dirs and user-selected documents via portals.
 
 ## Key tools
 
