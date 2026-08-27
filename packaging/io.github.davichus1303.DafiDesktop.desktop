@@ -1,0 +1,17 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=DAFI Desktop
+Name[es]=DAFI Desktop
+Comment=Despacho de Asesoria Funeraria Integral - sistema de administracion de clientes
+Comment[es]=Sistema de administracion de clientes para despacho funerario
+Exec=bin/DAFI-Desktop %U
+Icon=io.github.davichus1303.DafiDesktop
+Terminal=false
+Categories=Office;Finance;
+Keywords=funeral;dafi;clientes;asesoria;
+Keywords[es]=funeraria;dafi;clientes;asesoria;
+StartupNotify=true
+StartupWMClass=dafi
+X-GNOME-UsesNotifications=false
+X-Flatpak-RenamedFrom=com.dafi.desktop;
