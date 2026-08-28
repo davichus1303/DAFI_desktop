@@ -1,4 +1,4 @@
-id: io.github.davichus1303.DafiDesktop
+id: io.github.davichus1303.DAFI_desktop
 runtime: org.freedesktop.Platform
 runtime-version: '24.08'
 sdk: org.freedesktop.Sdk
@@ -11,15 +11,12 @@ sdk-extensions:
 separate-locales: false
 
 finish-args:
-  # Wayland/X11 + OpenGL for JavaFX
-  - --socket=wayland
+  # X11 + XShm for JavaFX (no native Wayland backend in JavaFX)
   - --socket=x11
   - --share=ipc
   - --device=dri
   # Secret Service (GNOME Keyring) used by the OS keyring adapter
   - --talk-name=org.freedesktop.secrets
-  # Desktop portal for the JavaFX FileChooser (key export/import, bulk import)
-  - --talk-name=org.freedesktop.portal.*
   # Bulk-import reports are written to the user's documents folder
   - --filesystem=xdg-documents
   # Legacy storage (~/.dafi): read for key/data migration, write because the
@@ -32,6 +29,8 @@ modules:
     buildsystem: simple
     build-options:
       append-path: /usr/lib/sdk/openjdk17/bin
+      build-args:
+        - --share=network
       env:
         JAVA_HOME: /usr/lib/sdk/openjdk17/jvm/openjdk-17
     build-commands:
@@ -45,14 +44,13 @@ modules:
           --java-options -Dfile.encoding=UTF-8 --java-options -Xmx512m
           --vendor "DAFI"
       - cp -r target/jpackage/DAFI-Desktop/* /app/
-      - install -Dm644 packaging/io.github.davichus1303.DafiDesktop.desktop
-          /app/share/applications/io.github.davichus1303.DafiDesktop.desktop
-      - install -Dm644 packaging/io.github.davichus1303.DafiDesktop.metainfo.xml
-          /app/share/metainfo/io.github.davichus1303.DafiDesktop.metainfo.xml
+      - install -Dm644 packaging/io.github.davichus1303.DAFI_desktop.desktop
+          /app/share/applications/io.github.davichus1303.DAFI_desktop.desktop
+      - install -Dm644 packaging/io.github.davichus1303.DAFI_desktop.metainfo.xml
+          /app/share/metainfo/io.github.davichus1303.DAFI_desktop.metainfo.xml
       - install -Dm644 src/main/resources/icons/icon-256.png
-          /app/share/icons/hicolor/256x256/apps/io.github.davichus1303.DafiDesktop.png
+          /app/share/icons/hicolor/256x256/apps/io.github.davichus1303.DAFI_desktop.png
     sources:
       - type: git
         url: https://github.com/davichus1303/DAFI_desktop.git
-        commit: 8b6c9864d1571f07f1ae40a1e9336d2cb84bc684
-        branch: develop
+        commit: 65b44a60a6fdfe3dafad3afc8344952ff4db6d45

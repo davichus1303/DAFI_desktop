@@ -78,10 +78,10 @@ dafi-desktop/
 │   └── test/                                         # 48 unit tests
 ├── packaging/
 │   ├── dafi.ico                                    # Windows icon
-│   ├── io.github.davichus1303.DafiDesktop.desktop  # Linux desktop entry
-│   ├── io.github.davichus1303.DafiDesktop.metainfo.xml  # AppStream metadata
+│   ├── io.github.davichus1303.DAFI_desktop.desktop  # Linux desktop entry
+│   ├── io.github.davichus1303.DAFI_desktop.metainfo.xml  # AppStream metadata
 │   ├── screenshots/                                # Flathub screenshots
-│   └── flatpak/io.github.davichus1303.DafiDesktop.yml  # Flatpak manifest
+│   └── flatpak/io.github.davichus1303.DAFI_desktop.yml  # Flatpak manifest
 ├── CHANGELOG.md
 ├── pom.xml
 └── run.sh                                          # Quick run script
@@ -213,24 +213,27 @@ Generates a Windows installer at `packaging/target/jpackage/`.
 
 ## Flatpak / Flathub packaging
 
-Canonical application ID: `io.github.davichus1303.DafiDesktop`
+Canonical application ID: `io.github.davichus1303.DAFI_desktop`
 
 This ID is required by Flathub (reverse-DNS recommended for projects without a
 dedicated domain) and is the only identifier used by the Flatpak manifest,
-desktop file and icon. It is **not** the Java package name.
+desktop file and icon. It is **not** the Java package name. The name mirrors
+the GitHub repository (`DAFI_desktop`), so the ID resolves to
+`https://github.com/davichus1303/DAFI_desktop` as required by the Flathub
+linter.
 
 | Artifact | Location |
 |----------|----------|
-| Flatpak manifest | `packaging/flatpak/io.github.davichus1303.DafiDesktop.yml` |
-| Desktop file | `packaging/io.github.davichus1303.DafiDesktop.desktop` |
-| AppStream metainfo | `packaging/io.github.davichus1303.DafiDesktop.metainfo.xml` → installed at `/app/share/metainfo/` |
+| Flatpak manifest | `packaging/flatpak/io.github.davichus1303.DAFI_desktop.yml` |
+| Desktop file | `packaging/io.github.davichus1303.DAFI_desktop.desktop` |
+| AppStream metainfo | `packaging/io.github.davichus1303.DAFI_desktop.metainfo.xml` → installed at `/app/share/metainfo/` |
 | Screenshots | `packaging/screenshots/*.png` (referenced by the metainfo from the `develop` branch) |
-| Icon (256 px PNG) | `src/main/resources/icons/icon-256.png` → installed as `io.github.davichus1303.DafiDesktop.png` |
+| Icon (256 px PNG) | `src/main/resources/icons/icon-256.png` → installed as `io.github.davichus1303.DAFI_desktop.png` |
 | Executable | `bin/DAFI-Desktop` (jpackage launcher, relative to `/app` in the sandbox) |
 
 Design notes:
 
-- The `.desktop` lands at `/app/share/applications/io.github.davichus1303.DafiDesktop.desktop`
+- The `.desktop` lands at `/app/share/applications/io.github.davichus1303.DAFI_desktop.desktop`
   inside the sandbox; Flathub validates it against the appstream spec.
 - `Exec=/app/bin/DAFI-Desktop` is absolute on purpose: Flathub rejects desktop
   entries whose `Exec` is not an absolute path inside the sandbox.
