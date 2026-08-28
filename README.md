@@ -223,8 +223,13 @@ Design notes:
 
 - The `.desktop` lands at `/app/share/applications/io.github.davichus1303.DafiDesktop.desktop`
   inside the sandbox; Flathub validates it against the appstream spec.
-- `StartupWMClass=dafi` matches the window class reported by the JavaFX runtime;
-  keep it in sync if the launcher naming changes.
+- `Exec=/app/bin/DAFI-Desktop` is absolute on purpose: Flathub rejects desktop
+  entries whose `Exec` is not an absolute path inside the sandbox.
+- `StartupWMClass` is intentionally omitted. The freedesktop desktop-entry
+  spec does not require it, and it is only meaningful when it matches the
+  window class the runtime actually reports; the value will be determined with
+  `xprop`/`xwininfo` during Phase 6 (local build validation) before it is
+  declared.
 - The manifest (Phase 3) must not export `--share=network`; the app reads/writes
   only under XDG dirs and user-selected documents via portals.
 
