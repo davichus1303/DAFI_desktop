@@ -17,13 +17,15 @@ finish-args:
   - --share=ipc
   - --device=dri
   # Secret Service (GNOME Keyring) used by the OS keyring adapter
-  - --socket=session-bus
   - --talk-name=org.freedesktop.secrets
+  # Desktop portal for the JavaFX FileChooser (key export/import, bulk import)
+  - --talk-name=org.freedesktop.portal.*
   # Bulk-import reports are written to the user's documents folder
   - --filesystem=xdg-documents
-  # Read-only legacy key storage (~/.dafi/data) so the key
-  # migration to the OS keyring works without full home access
-  - --filesystem=home/.dafi:ro
+  # Legacy storage (~/.dafi): read for key/data migration, write because the
+  # logback file appender writes ~/.dafi/logs and the config adapter may keep
+  # using the legacy ~/.dafi/config. Restricted to .dafi, not full home.
+  - --filesystem=home/.dafi
 
 modules:
   - name: dafi-desktop
