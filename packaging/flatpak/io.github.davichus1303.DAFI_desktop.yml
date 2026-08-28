@@ -53,4 +53,4 @@ modules:
     sources:
       - type: git
         url: https://github.com/davichus1303/DAFI_desktop.git
-        commit: 1745fe2258a385c59754bf9915764c3cd2f7764e
+        commit: c26f2df500f0111de1f47e4d58002d2062e79883
