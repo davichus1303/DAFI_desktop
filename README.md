@@ -234,9 +234,16 @@ Design notes:
   window class the runtime actually reports; the value will be determined with
   `xprop`/`xwininfo` during Phase 6 (local build validation) before it is
   declared.
-- The manifest does not export `--share=network`; the app reads/writes only
-  under XDG dirs and the user's documents folder via portals, and talks to the
-  Secret Service (keyring) over the session bus.
+- The manifest does not export `--share=network`; the app performs no network
+  I/O and reads/writes only under XDG dirs, the user's documents folder and the
+  legacy `~/.dafi` storage.
+- `finish-args` follow least-privilege: the session bus is not granted as a
+  whole; the app talks only to `org.freedesktop.secrets` (keyring adapter) and
+  `org.freedesktop.portal.*` (desktop portal used by the JavaFX `FileChooser`
+  for key export/import and the bulk import). `--filesystem=home/.dafi` is
+  granted read-write because logback writes `~/.dafi/logs/` and the config
+  adapter may keep the legacy `~/.dafi/config`; it is scoped to that folder,
+  not the whole home.
 
 ## Key tools
 
