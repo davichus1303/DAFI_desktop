@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>io.github.davichus1303.DafiDesktop</id>
+  <id>io.github.davichus1303.DAFI_desktop</id>
   <name>DAFI Desktop</name>
   <summary>Client management system for a funeral services firm</summary>
   <summary xml:lang="es">Sistema de administración de clientes para despacho funerario</summary>
@@ -34,7 +34,7 @@
   <url type="homepage">https://github.com/davichus1303/DAFI_desktop</url>
   <url type="vcs-browser">https://github.com/davichus1303/DAFI_desktop</url>
 
-  <launchable type="desktop-id">io.github.davichus1303.DafiDesktop.desktop</launchable>
+  <launchable type="desktop-id">io.github.davichus1303.DAFI_desktop.desktop</launchable>
 
   <provides>
     <binary>DAFI-Desktop</binary>
