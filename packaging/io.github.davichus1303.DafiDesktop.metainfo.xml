@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.davichus1303.DafiDesktop</id>
+  <name>DAFI Desktop</name>
+  <summary>Client management system for a funeral services firm</summary>
+  <summary xml:lang="es">Sistema de administración de clientes para despacho funerario</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <description>
+    <p>
+      DAFI Desktop is a desktop application for managing the clients of a
+      funeral services firm. It keeps contract information, client records,
+      contract types and payment methods, and supports bulk imports from
+      Excel spreadsheets.
+    </p>
+    <p>
+      All data is stored locally in encrypted JSON files under the XDG data
+      directory; the password is hashed with Argon2id and the encryption key
+      is kept in the operating system credential vault.
+    </p>
+    <p>
+      Local encrypted storage (AES-256-GCM). Secure authentication with
+      Argon2id. Bulk client import from Excel with validation and error
+      report. Real-time search with debounce. Internationalization in Spanish.
+    </p>
+  </description>
+
+  <developer id="io.github.davichus1303">
+    <name>DAFI</name>
+  </developer>
+
+  <url type="homepage">https://github.com/davichus1303/DAFI_desktop</url>
+  <url type="vcs-browser">https://github.com/davichus1303/DAFI_desktop</url>
+
+  <launchable type="desktop-id">io.github.davichus1303.DafiDesktop.desktop</launchable>
+
+  <provides>
+    <binary>DAFI-Desktop</binary>
+  </provides>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Clients module</caption>
+      <caption xml:lang="es">Módulo de clientes</caption>
+      <image type="source">https://raw.githubusercontent.com/davichus1303/DAFI_desktop/develop/packaging/screenshots/clients.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Contract types catalog</caption>
+      <caption xml:lang="es">Catálogo de tipos de contrato</caption>
+      <image type="source">https://raw.githubusercontent.com/davichus1303/DAFI_desktop/develop/packaging/screenshots/contract-types.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Payment methods catalog</caption>
+      <caption xml:lang="es">Catálogo de modos de pago</caption>
+      <image type="source">https://raw.githubusercontent.com/davichus1303/DAFI_desktop/develop/packaging/screenshots/payment-types.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Login screen</caption>
+      <caption xml:lang="es">Pantalla de inicio de sesión</caption>
+      <image type="source">https://raw.githubusercontent.com/davichus1303/DAFI_desktop/develop/packaging/screenshots/login.png</image>
+    </screenshot>
+  </screenshots>
+
+  <releases>
+    <release version="1.0.0" date="2026-08-26">
+      <url type="details">https://github.com/davichus1303/DAFI_desktop/releases/tag/v1.0.0</url>
+    </release>
+  </releases>
+
+  <content_rating type="oars-1.1"/>
+</component>

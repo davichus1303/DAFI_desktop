@@ -47,10 +47,12 @@ modules:
       - cp -r target/jpackage/DAFI-Desktop/* /app/
       - install -Dm644 packaging/io.github.davichus1303.DafiDesktop.desktop
           /app/share/applications/io.github.davichus1303.DafiDesktop.desktop
+      - install -Dm644 packaging/io.github.davichus1303.DafiDesktop.metainfo.xml
+          /app/share/metainfo/io.github.davichus1303.DafiDesktop.metainfo.xml
       - install -Dm644 src/main/resources/icons/icon-256.png
           /app/share/icons/hicolor/256x256/apps/io.github.davichus1303.DafiDesktop.png
     sources:
       - type: git
         url: https://github.com/davichus1303/DAFI_desktop.git
-        commit: 2754e20537ce7655fd5e5e7a1e3cc6de532c996d
+        commit: 8b6c9864d1571f07f1ae40a1e9336d2cb84bc684
         branch: develop
