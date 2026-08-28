@@ -1,0 +1,54 @@
+id: io.github.davichus1303.DafiDesktop
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: DAFI-Desktop
+
+# Bundles JDK 17 + Maven + Gradle under /usr/lib/sdk/openjdk17
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.openjdk17
+
+separate-locales: false
+
+finish-args:
+  # Wayland/X11 + OpenGL for JavaFX
+  - --socket=wayland
+  - --socket=x11
+  - --share=ipc
+  - --device=dri
+  # Secret Service (GNOME Keyring) used by the OS keyring adapter
+  - --socket=session-bus
+  - --talk-name=org.freedesktop.secrets
+  # Bulk-import reports are written to the user's documents folder
+  - --filesystem=xdg-documents
+  # Read-only legacy key storage (~/.dafi/data) so the key
+  # migration to the OS keyring works without full home access
+  - --filesystem=home/.dafi:ro
+
+modules:
+  - name: dafi-desktop
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/openjdk17/bin
+      env:
+        JAVA_HOME: /usr/lib/sdk/openjdk17/jvm/openjdk-17
+    build-commands:
+      - mvn -B clean package -DskipTests
+      - mvn -B dependency:copy-dependencies -DoutputDirectory=target/lib
+      - cp target/dafi-desktop-1.0.0.jar target/lib/
+      - jpackage --input target/lib --main-jar dafi-desktop-1.0.0.jar
+          --main-class com.dafi.desktop.infrastructure.DafiLauncher
+          --name DAFI-Desktop --app-version 1.0.0 --type app-image
+          --dest target/jpackage --icon src/main/resources/icons/icon-256.png
+          --java-options -Dfile.encoding=UTF-8 --java-options -Xmx512m
+          --vendor "DAFI"
+      - cp -r target/jpackage/DAFI-Desktop/* /app/
+      - install -Dm644 packaging/io.github.davichus1303.DafiDesktop.desktop
+          /app/share/applications/io.github.davichus1303.DafiDesktop.desktop
+      - install -Dm644 src/main/resources/icons/icon-256.png
+          /app/share/icons/hicolor/256x256/apps/io.github.davichus1303.DafiDesktop.png
+    sources:
+      - type: git
+        url: https://github.com/davichus1303/DAFI_desktop.git
+        commit: 2754e20537ce7655fd5e5e7a1e3cc6de532c996d
+        branch: develop

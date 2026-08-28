@@ -68,15 +68,18 @@ dafi-desktop/
 │   │   │   ├── DafiLauncher.java                   # Non-JavaFX launcher
 │   │   │   └── I18n.java                           # Internationalization
 │   │   └── shared/utils/
-│   │       └── JsonObjectReader.java               # Typed JSON reader
+│   │       ├── BaseDirectory.java                    # XDG base directory resolution
+│   │       └── JsonObjectReader.java                 # Typed JSON reader
 │   ├── main/resources/
-│   │   ├── fxml/                                   # FXML views
-│   │   ├── css/                                    # CSS styles
-│   │   ├── i18n/es.json                            # Spanish text strings
-│   │   └── icons/                                  # Window icons (16-256px)
-│   └── test/                                       # 40 unit tests
+│   │   ├── fxml/                                     # FXML views
+│   │   ├── css/                                      # CSS styles
+│   │   ├── i18n/es.json                              # Spanish text strings
+│   │   └── icons/                                    # Window icons (16-256px)
+│   └── test/                                         # 48 unit tests
 ├── packaging/
-│   └── dafi.ico                                    # Windows icon
+│   ├── dafi.ico                                    # Windows icon
+│   ├── io.github.davichus1303.DafiDesktop.desktop  # Linux desktop entry
+│   └── flatpak/io.github.davichus1303.DafiDesktop.yml  # Flatpak manifest
 ├── pom.xml
 └── run.sh                                          # Quick run script
 ```
@@ -215,6 +218,7 @@ desktop file and icon. It is **not** the Java package name.
 
 | Artifact | Location |
 |----------|----------|
+| Flatpak manifest | `packaging/flatpak/io.github.davichus1303.DafiDesktop.yml` |
 | Desktop file | `packaging/io.github.davichus1303.DafiDesktop.desktop` |
 | Icon (256 px PNG) | `src/main/resources/icons/icon-256.png` → installed as `io.github.davichus1303.DafiDesktop.png` |
 | Executable | `bin/DAFI-Desktop` (jpackage launcher, relative to `/app` in the sandbox) |
@@ -230,8 +234,9 @@ Design notes:
   window class the runtime actually reports; the value will be determined with
   `xprop`/`xwininfo` during Phase 6 (local build validation) before it is
   declared.
-- The manifest (Phase 3) must not export `--share=network`; the app reads/writes
-  only under XDG dirs and user-selected documents via portals.
+- The manifest does not export `--share=network`; the app reads/writes only
+  under XDG dirs and the user's documents folder via portals, and talks to the
+  Secret Service (keyring) over the session bus.
 
 ## Key tools
 
@@ -258,7 +263,7 @@ Useful for migrating data between machines or creating backups.
 
 ```bash
 mvn clean compile          # Compile
-mvn test                   # Run 40 tests
+mvn test                   # Run 48 tests
 mvn javafx:run             # Run application
 mvn javafx:run -Djavafx.args="--width=1280 --height=800"
 ```
