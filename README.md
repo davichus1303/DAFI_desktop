@@ -79,7 +79,10 @@ dafi-desktop/
 ├── packaging/
 │   ├── dafi.ico                                    # Windows icon
 │   ├── io.github.davichus1303.DafiDesktop.desktop  # Linux desktop entry
+│   ├── io.github.davichus1303.DafiDesktop.metainfo.xml  # AppStream metadata
+│   ├── screenshots/                                # Flathub screenshots
 │   └── flatpak/io.github.davichus1303.DafiDesktop.yml  # Flatpak manifest
+├── CHANGELOG.md
 ├── pom.xml
 └── run.sh                                          # Quick run script
 ```
@@ -220,6 +223,8 @@ desktop file and icon. It is **not** the Java package name.
 |----------|----------|
 | Flatpak manifest | `packaging/flatpak/io.github.davichus1303.DafiDesktop.yml` |
 | Desktop file | `packaging/io.github.davichus1303.DafiDesktop.desktop` |
+| AppStream metainfo | `packaging/io.github.davichus1303.DafiDesktop.metainfo.xml` → installed at `/app/share/metainfo/` |
+| Screenshots | `packaging/screenshots/*.png` (referenced by the metainfo from the `develop` branch) |
 | Icon (256 px PNG) | `src/main/resources/icons/icon-256.png` → installed as `io.github.davichus1303.DafiDesktop.png` |
 | Executable | `bin/DAFI-Desktop` (jpackage launcher, relative to `/app` in the sandbox) |
 
