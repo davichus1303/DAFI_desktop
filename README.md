@@ -239,19 +239,23 @@ Design notes:
   entries whose `Exec` is not an absolute path inside the sandbox.
 - `StartupWMClass` is intentionally omitted. The freedesktop desktop-entry
   spec does not require it, and it is only meaningful when it matches the
-  window class the runtime actually reports; the value will be determined with
-  `xprop`/`xwininfo` during Phase 6 (local build validation) before it is
-  declared.
+  window class the runtime actually reports, so declaring it would be guesswork.
+- The build is fully offline: Flathub builds have no network access, so the
+  Maven artifacts (plugins and runtime dependencies) are vendored in
+  `packaging/flatpak/maven-dependencies.yaml`, extracted into
+  `.m2/repository` under the build dir, and Maven runs with
+  `-Dmaven.repo.local=.m2/repository -o`. Regenerate that file after bumping
+  dependencies with `mvn -o dependency:copy-dependencies` against a clean local
+  repo.
 - The manifest does not export `--share=network`; the app performs no network
   I/O and reads/writes only under XDG dirs, the user's documents folder and the
   legacy `~/.dafi` storage.
 - `finish-args` follow least-privilege: the session bus is not granted as a
-  whole; the app talks only to `org.freedesktop.secrets` (keyring adapter) and
-  `org.freedesktop.portal.*` (desktop portal used by the JavaFX `FileChooser`
-  for key export/import and the bulk import). `--filesystem=home/.dafi` is
-  granted read-write because logback writes `~/.dafi/logs/` and the config
-  adapter may keep the legacy `~/.dafi/config`; it is scoped to that folder,
-  not the whole home.
+  whole; the app talks only to `org.freedesktop.secrets` (keyring adapter).
+  Portals are accessible by default in Flatpak, so no extra `--talk-name` is
+  needed. `--filesystem=home/.dafi` is granted read-write because logback
+  writes `~/.dafi/logs/` and the config adapter may keep the legacy
+  `~/.dafi/config`; it is scoped to that folder, not the whole home.
 
 ## Key tools
 

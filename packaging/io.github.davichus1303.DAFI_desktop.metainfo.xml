@@ -25,7 +25,12 @@
       Argon2id. Bulk client import from Excel with validation and error
       report. Real-time search with debounce. Internationalization in Spanish.
     </p>
+    <p>**This app is only available in Spanish.**</p>
   </description>
+
+  <categories>
+    <category>Office</category>
+  </categories>
 
   <developer id="io.github.davichus1303">
     <name>DAFI</name>

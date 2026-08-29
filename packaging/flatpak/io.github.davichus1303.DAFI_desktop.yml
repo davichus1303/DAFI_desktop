@@ -29,13 +29,13 @@ modules:
     buildsystem: simple
     build-options:
       append-path: /usr/lib/sdk/openjdk17/bin
-      build-args:
-        - --share=network
       env:
         JAVA_HOME: /usr/lib/sdk/openjdk17/jvm/openjdk-17
+        MAVEN_OPTS: -Dmaven.repo.local=.m2/repository
     build-commands:
-      - mvn -B clean package -DskipTests
-      - mvn -B dependency:copy-dependencies -DoutputDirectory=target/lib
+      - mvn -o -B clean package -Dmaven.test.skip=true
+      - mvn -o -B dependency:copy-dependencies -DincludeScope=runtime
+          -DoutputDirectory=target/lib
       - cp target/dafi-desktop-1.0.0.jar target/lib/
       - jpackage --input target/lib --main-jar dafi-desktop-1.0.0.jar
           --main-class com.dafi.desktop.infrastructure.DafiLauncher
@@ -50,7 +50,10 @@ modules:
           /app/share/metainfo/io.github.davichus1303.DAFI_desktop.metainfo.xml
       - install -Dm644 src/main/resources/icons/icon-256.png
           /app/share/icons/hicolor/256x256/apps/io.github.davichus1303.DAFI_desktop.png
+      - install -Dm644 LICENSE
+          /app/share/licenses/io.github.davichus1303.DAFI_desktop/LICENSE
     sources:
+      - maven-dependencies.yaml
       - type: git
         url: https://github.com/davichus1303/DAFI_desktop.git
-        commit: 65b44a60a6fdfe3dafad3afc8344952ff4db6d45
+        commit: d0190d1975e7112da82fca3a5f2fec4268d6ec60
