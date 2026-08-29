@@ -56,4 +56,4 @@ modules:
       - maven-dependencies.yaml
       - type: git
         url: https://github.com/davichus1303/DAFI_desktop.git
-        commit: d0190d1975e7112da82fca3a5f2fec4268d6ec60
+        commit: fdd46931dc066ac96d6f6e3e476aa8996921a206
