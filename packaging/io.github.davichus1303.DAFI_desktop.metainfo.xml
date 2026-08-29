@@ -49,22 +49,22 @@
     <screenshot type="default">
       <caption>Clients module</caption>
       <caption xml:lang="es">Módulo de clientes</caption>
-      <image type="source">https://raw.githubusercontent.com/davichus1303/DAFI_desktop/develop/packaging/screenshots/clients.png</image>
+      <image type="source">https://raw.githubusercontent.com/davichus1303/DAFI_desktop/v1.1.0/packaging/screenshots/clients.png</image>
     </screenshot>
     <screenshot>
       <caption>Contract types catalog</caption>
       <caption xml:lang="es">Catálogo de tipos de contrato</caption>
-      <image type="source">https://raw.githubusercontent.com/davichus1303/DAFI_desktop/develop/packaging/screenshots/contract-types.png</image>
+      <image type="source">https://raw.githubusercontent.com/davichus1303/DAFI_desktop/v1.1.0/packaging/screenshots/contract-types.png</image>
     </screenshot>
     <screenshot>
       <caption>Payment methods catalog</caption>
       <caption xml:lang="es">Catálogo de modos de pago</caption>
-      <image type="source">https://raw.githubusercontent.com/davichus1303/DAFI_desktop/develop/packaging/screenshots/payment-types.png</image>
+      <image type="source">https://raw.githubusercontent.com/davichus1303/DAFI_desktop/v1.1.0/packaging/screenshots/payment-types.png</image>
     </screenshot>
     <screenshot>
       <caption>Login screen</caption>
       <caption xml:lang="es">Pantalla de inicio de sesión</caption>
-      <image type="source">https://raw.githubusercontent.com/davichus1303/DAFI_desktop/develop/packaging/screenshots/login.png</image>
+      <image type="source">https://raw.githubusercontent.com/davichus1303/DAFI_desktop/v1.1.0/packaging/screenshots/login.png</image>
     </screenshot>
   </screenshots>
 

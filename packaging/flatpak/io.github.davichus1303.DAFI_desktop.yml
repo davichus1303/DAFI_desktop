@@ -1,14 +1,15 @@
 id: io.github.davichus1303.DAFI_desktop
 runtime: org.freedesktop.Platform
-runtime-version: '24.08'
+runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
+
+separate-locales: false
+
 command: DAFI-Desktop
 
 # Bundles JDK 17 + Maven + Gradle under /usr/lib/sdk/openjdk17
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.openjdk17
-
-separate-locales: false
 
 finish-args:
   # X11 + XShm for JavaFX (no native Wayland backend in JavaFX)
@@ -57,3 +58,4 @@ modules:
       - type: git
         url: https://github.com/davichus1303/DAFI_desktop.git
         tag: v1.1.0
+        commit: aacac4fb92a77e96ba94dbcbaf5100ac6eab6a10

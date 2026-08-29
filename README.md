@@ -227,9 +227,10 @@ linter.
 | Flatpak manifest | `packaging/flatpak/io.github.davichus1303.DAFI_desktop.yml` |
 | Desktop file | `packaging/io.github.davichus1303.DAFI_desktop.desktop` |
 | AppStream metainfo | `packaging/io.github.davichus1303.DAFI_desktop.metainfo.xml` → installed at `/app/share/metainfo/` |
-| Screenshots | `packaging/screenshots/*.png` (referenced by the metainfo from the `develop` branch) |
+| Screenshots | `packaging/screenshots/*.png` (referenced by the metainfo from the `v1.1.0` tag) |
 | Icon (256 px PNG) | `src/main/resources/icons/icon-256.png` → installed as `io.github.davichus1303.DAFI_desktop.png` |
 | Executable | `bin/DAFI-Desktop` (jpackage launcher, relative to `/app` in the sandbox) |
+| Flathub config | `packaging/flatpak/flathub.json` (`skip-arches: ["aarch64"]` — JavaFX native deps only validated on x86_64) |
 
 Design notes:
 
@@ -246,7 +247,8 @@ Design notes:
   `.m2/repository` under the build dir, and Maven runs with
   `-Dmaven.repo.local=.m2/repository -o`. Regenerate that file after bumping
   dependencies with `mvn -o dependency:copy-dependencies` against a clean local
-  repo.
+  repo. The git source pins both the release tag (`v1.1.0`) and its commit SHA
+  for reproducibility.
 - The manifest does not export `--share=network`; the app performs no network
   I/O and reads/writes only under XDG dirs, the user's documents folder and the
   legacy `~/.dafi` storage.
