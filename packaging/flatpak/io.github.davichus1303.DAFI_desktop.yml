@@ -36,10 +36,10 @@ modules:
       - mvn -o -B clean package -Dmaven.test.skip=true
       - mvn -o -B dependency:copy-dependencies -DincludeScope=runtime
           -DoutputDirectory=target/lib
-      - cp target/dafi-desktop-1.0.0.jar target/lib/
-      - jpackage --input target/lib --main-jar dafi-desktop-1.0.0.jar
+      - cp target/dafi-desktop-1.1.0.jar target/lib/
+      - jpackage --input target/lib --main-jar dafi-desktop-1.1.0.jar
           --main-class com.dafi.desktop.infrastructure.DafiLauncher
-          --name DAFI-Desktop --app-version 1.0.0 --type app-image
+          --name DAFI-Desktop --app-version 1.1.0 --type app-image
           --dest target/jpackage --icon src/main/resources/icons/icon-256.png
           --java-options -Dfile.encoding=UTF-8 --java-options -Xmx512m
           --vendor "DAFI"
